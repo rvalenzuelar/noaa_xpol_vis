@@ -9,6 +9,7 @@
 import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
+import Circlem
 
 from netCDF4 import Dataset
 from glob import glob
@@ -16,96 +17,524 @@ from datetime import datetime
 from matplotlib.backends.backend_pdf import PdfPages
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-basedir='/home/rvalenzuela/XPOL/netcdf/c09/PPI/elev005/'
-def get_data():
-	xfiles=glob(basedir+'*.cdf')
-	xfiles.sort()
+from mpl_toolkits.basemap import Basemap
 
-	za_arrays=[]
-	vr_arrays=[]
-	time_index=[]
-
-	for x in xfiles:
-		data=Dataset(x,'r')
-		scale=64.
-		VR=np.squeeze(data.variables['VR'][0,1,:,:])/scale
-		ZA=np.squeeze(data.variables['ZA'][0,1,:,:])/scale
-		date = ''.join(data.variables['start_date'][:]).replace('/01','/20')
-		time = ''.join(data.variables['start_time'][:])
-		raw_date=date+' '+time
-		raw_fmt='%m/%d/%Y %H:%M:%S'
-		dt = datetime.strptime(raw_date,raw_fmt)
-		
-		VR=np.ma.filled(VR,fill_value=np.nan)
-		ZA=np.ma.filled(ZA,fill_value=np.nan)
-		
-		vr_arrays.append(VR)
-		za_arrays.append(ZA)
-		time_index.append(dt)
-		data.close()
-	
-	df = pd.DataFrame(index=time_index,columns=['ZA','VR'])
-	df['ZA']=za_arrays
-	df['VR']=vr_arrays
-	return df
-
-def get_mean(arrays,minutes=60, name=None):
-
-	g = pd.TimeGrouper(str(minutes)+'T')
-	G = arrays.groupby(g)
-
-	gindex = G.indices.items()
-	gindex.sort()
-	mean=[]
-	dates=[]
-	for gx in gindex:
-		gr = arrays.ix[gx[1]].values
-		a=gr[0]
-		if name=='ZA':
-			a=np.power(10,a/10.)
-		for g in gr[1:]:
-			a=np.dstack((a,g))			
-		m = np.nanmean(a,axis=2)
-		if name=='ZA':
-			m=10*np.log10(m)
-		mean.append(m)
-		dates.append(gx[0])
-
-	return dates, np.array(mean)
-
-def plot(array,ax=None,show=True,name=None):
+def plot(array,ax=None,show=True,name=None,smode=None,
+			date=None, elev=None, title=None, add_azline=None,
+			colorbar=True,extent=None,second_date=None):
 
 	if not ax:
 		fig,ax=plt.subplots()
 
 	if name=='ZA':
-		vmin,vmax = [5,45]
-		cmap='nipy_spectral'
+		vmin,vmax = [-10,45]
+		cmap='jet'
+		cbar_ticks= range(vmin,vmax+5,5)
 	elif name=='VR':
-		vmin,vmax = [-15,15]
-		cmap='RdBu'
+		vmin,vmax = [-20,20]
+		cmap=custom_cmap('ppi_vr1')
+		cbar_ticks=range(vmin,vmax+5,5)
+	elif name == 'count':
+		vmin,vmax = [0,180]
+		cmap='viridis'
+		cbar_ticks=range(vmin,vmax+10,10)		
+	elif name == 'percent':
+		vmin,vmax = [0,100]
+		cmap='inferno'
+		cbar_ticks=range(vmin,vmax+10,10)		
+
+	if elev is not None and name == 'VR':
+		array = array/np.cos(np.radians(elev))
+		idx = np.where((elev>=65) & (elev <=115))
+		array[idx]=np.nan
+		vmin,vmax = [0,40]
+		cmap=custom_cmap('rhi_vr1')
+		cbar_ticks=range(vmin,vmax+10,10)
 
 	im=ax.imshow(array,interpolation='none', origin='lower',
-					vmin=vmin,vmax=vmax,cmap=cmap)
-	add_colorbar(ax,im)
+					vmin=vmin,vmax=vmax,
+					cmap=cmap,
+					extent=extent,
+					aspect='auto')
+
+	ax_id=ax.get_gid()
+	set_yticklabs=False
+	if ax_id in ['ax1']:
+	 	set_yticklabs=True
+		
+
+	if smode == 'ppi':
+		add_rings(ax,space_km=10,color='k')
+		add_azimuths(ax,space_deg=30)
+		if add_azline:
+			x=np.arange(-40,40)
+			if add_azline in [0, 180]:
+				y=x
+				x=y-x
+			elif add_azline in [90, 270]:
+				y=x*np.sin(np.radians(add_azline))
+			else:
+				y=x*np.cos(np.radians(add_azline-180))
+			ax.plot(x,y,'-',color='red')
+		ax.set_xlim([extent[0], extent[1]])
+		ax.set_ylim([extent[2], extent[3]])
+		ax.set_xticklabels([''])
+		ax.set_yticklabels([''])
+		ax.grid(False)
+	elif smode == 'rhi':
+		# ax.set_xlim([-40, 20])
+		ax.set_ylim([0, 11])
+		yticks=np.arange(0.5,11.5,1.0)
+		ax.set_yticks(yticks)
+		if set_yticklabs:
+			yticklabels=np.array([str(y) for y in yticks])
+			# yticklabels[::2]=''
+			ax.set_yticklabels(yticklabels)
+		else:
+			ax.set_yticklabels([''])
+		ax.grid(True)
+		# plt.subplots_adjust(left=0.05, right=0.95)
 	plt.draw()
+	if date:
+		plt.text(0.0,1.01, date,ha='left', transform=ax.transAxes)
+	if second_date:
+		plt.text(1.0,1.01, second_date,ha='right', transform=ax.transAxes)
+	if title:
+		plt.text(0.4,1.01, title,ha='left', transform=ax.transAxes)
+	if colorbar:
+		add_colorbar(ax,im,cbar_ticks)
+
 	if show:
 		plt.show(block=False)
 
-def plot_mean(means,dates,name):
+def plotm(array,ax=None,show=True,name=None):
 
-	xpolmean=PdfPages('xpol_mean.pdf')
+	if not ax:
+		fig,ax=plt.subplots()
+
+	if name=='ZA':
+		vmin,vmax = [-10,45]
+		cmap='jet'
+		cbar_ticks= range(vmin,vmax+5,5)
+	elif name=='VR':
+		vmin,vmax = [-20,20]
+		cmap=custom_cmap()
+		cbar_ticks=range(vmin,vmax+5,5)
+
+	radarx=np.arange(-58,45.5,0.5)
+	radary=np.arange(-58,33.5,0.5)
+	radarloc=(38.505260, -123.229607) # at FRS
+	radarlon=cart2geo(radarx,'WE', radarloc)
+	radarlat=cart2geo(radary,'NS', radarloc)
+
+	m=Basemap(projection='merc',
+					llcrnrlat=min(radarlat),
+					urcrnrlat=max(radarlat),
+					llcrnrlon=min(radarlon),
+					urcrnrlon=max(radarlon),
+					lat_0=radarloc[0],
+					lon_0=radarloc[1],
+					resolution='i')
+
+	m.drawcoastlines()
+	im=m.imshow(array,interpolation='none', origin='lower',
+					vmin=vmin,vmax=vmax,cmap=cmap)
+	add_rings(ax,space_km=10,color='k',mapping=[m, radarloc[0], radarloc[1]])
+	add_locations(ax, m, 'all')
+
+	add_colorbar(ax,im,cbar_ticks)
+
+	plt.show(block=False)
+
+
+def plot_mean(means,dates,name,smode,elev=None, title=None,colorbar=True):
+	print title
+	xpolmean=PdfPages('xpol_meanscan_'+name.lower()+'.pdf')
 	ntimes,_,_=means.shape
 	for n in range(ntimes):
-		fig,ax = plt.subplots()
-		plot(means[n,:,:],ax=ax, show=False,name=name)
+		if smode in ['ppi', 'PPI']:
+			fig,ax = plt.subplots()
+			plotm(means[n,:,:],ax=ax, show=False,name=name)
+		elif smode in ['rhi', 'RHI']:
+			fig,ax = plt.subplots(figsize=(10,5))
+			if name == 'ZA':
+				plot(means[n,:,:],ax=ax, show=False,name=name,smode='rhi',
+					date=dates[n], title=title, colorbar=colorbar)			
+			elif name == 'VR':
+				plot(means[n,:,:],ax=ax, show=False,name=name,smode='rhi',
+					date=dates[n],elev=elev[n,:,:],title=title, colorbar=colorbar)	
+			ax.set_xlabel('Distance from radar [km]')
+			ax.set_ylabel('Altitude AGL [km]')
 		print dates[n]
-		plt.suptitle(dates[n])
 		xpolmean.savefig()
 		plt.close('all')
 	xpolmean.close()
 
-def add_colorbar(ax,im):
+def plot_single(xpol_dataframe, name=None,smode=None,
+				colorbar=True,case=None, saveas=None):
+
+	xpolsingle = PdfPages(saveas)
+	dates=xpol_dataframe.index
+	single=xpol_dataframe[name]
+	ntimes = single.shape[0]
+	title=xpol_dataframe.index.name+' '+name
+	print title
+	if 'time_az2' in xpol_dataframe:
+		second_dates=xpol_dataframe['time_az2']
+	else:
+		second_dates=['']*ntimes
+
+	if case in [13,14]:
+		rhi_extent=[-30,30,0.05,11]	
+	else:
+		rhi_extent=[-40,20,0.05,11]	
+	ppi_extent=[-58,45, -58,33]
+
+	for n in range(ntimes):
+		if smode in ['ppi', 'PPI']:
+			fig,ax = plt.subplots(figsize=(7,6))
+			plot(single.ix[n],ax=ax, show=False,name=name,smode='ppi',
+				date=dates[n],colorbar=colorbar,extent=ppi_extent, title=title)
+			plt.subplots_adjust(left=0.05, right=0.93, bottom=0.05, top=0.95)					
+
+		if smode in ['rhi', 'RHI']:
+			fig,ax = plt.subplots(figsize=(10,4))
+			ax.set_gid('ax1')
+			if name == 'VR':
+				elev_angle=get_max(xpol_dataframe['EL'])
+				plot(single.ix[n],ax=ax, show=False,name=name,smode='rhi',
+					date=dates[n],elev=elev_angle,colorbar=colorbar,
+					extent=rhi_extent,	second_date=second_dates[n], title=title)
+
+			elif name == 'ZA':
+				if second_dates is not None:
+					plot(single.ix[n],ax=ax, show=False,name=name,smode='rhi',
+						date=dates[n],colorbar=colorbar, extent=rhi_extent,
+						second_date=second_dates[n],title=title)	
+				else:
+					plot(single.ix[n],ax=ax, show=False,name=name,smode='rhi',
+						date=dates[n],colorbar=colorbar, extent=rhi_extent, title=title)	
+			ax.set_xlabel('Distance from radar [km]')
+			ax.set_ylabel('Altitude AGL [km]')
+			plt.subplots_adjust(left=0.08, right=0.95, bottom=0.12)
+
+		print 'Plotting '+smode+' '+dates[n].strftime('%Y-%b-%d %H:%M:%S')
+
+
+		xpolsingle.savefig()
+		plt.close('all')
+	xpolsingle.close()
+
+def get_data(case,scanmode,angle):
+
+	if scanmode == 'PPI':
+		basestr='/home/rvalenzuela/XPOL/netcdf/c{0}/PPI/elev{1}/'
+		angle=angle*10
+	elif scanmode == 'RHI':
+		basestr='/home/rvalenzuela/XPOL/netcdf/c{0}/RHI/az{1}/'
+
+	basedir=basestr.format(str(case).zfill(2), str(int(angle)).zfill(3))
+	cdf_files=glob(basedir+'*.cdf')
+	cdf_files.sort()
+
+	za_arrays=[] # attenuation corrected dBZ
+	vr_arrays=[] # radial velocity
+	el_arrays=[] # elevation angle
+	time_index=[]
+	time_index2=[] # for complementary azimuths
+
+	for n, f in enumerate(cdf_files):
+		data=Dataset(f,'r')
+		scale=64.
+		if scanmode == 'PPI':
+			VR=np.squeeze(data.variables['VR'][0,1,:,:])/scale
+			ZA=np.squeeze(data.variables['ZA'][0,1,:,:])/scale
+			EL=np.squeeze(data.variables['EL'][0,1,:,:])/scale									
+		elif scanmode == 'RHI':
+			VR=np.squeeze(data.variables['VR'][0,:,1,:])/scale
+			ZA=np.squeeze(data.variables['ZA'][0,:,1,:])/scale
+			EL=np.squeeze(data.variables['EL'][0,:,1,:])/scale						
+			' invert sign to represent northward wind from southward azimuths'
+			VR=VR*-1
+
+		' add second complemental azimuth in RHI '
+		if case in [11, 13, 14] and scanmode == 'RHI':
+			basedir=basestr.format(str(case).zfill(2), '360')
+			cdf_files2=glob(basedir+'*.cdf')
+			cdf_files2.sort()
+			data2=Dataset(cdf_files2[n])
+			VR2=np.squeeze(data2.variables['VR'][0,:,1,:])/scale
+			ZA2=np.squeeze(data2.variables['ZA'][0,:,1,:])/scale
+			EL2=np.squeeze(data2.variables['EL'][0,:,1,:])/scale				
+			VR=np.hstack((VR,VR2))
+			ZA=np.hstack((ZA,ZA2))
+			EL=np.hstack((EL,EL2))
+			sd=data2.variables['start_date'][:]
+			st=data2.variables['start_time'][:]
+			raw_date = parse_rawdate(sd, st)
+			raw_fmt='%m/%d/%Y %H:%M:%S'
+			dt2 = datetime.strptime(raw_date,raw_fmt)
+			time_index2.append(dt2)
+			data2.close()
+
+		VR=np.ma.filled(VR,fill_value=np.nan)
+		ZA=np.ma.filled(ZA,fill_value=np.nan)
+		EL=np.ma.filled(EL,fill_value=np.nan)
+		
+		' when merging is not getting rid of fill values so this fix it'
+		VR[VR==-32768.0]=np.nan
+		ZA[ZA==-32768.0]=np.nan
+		
+		vr_arrays.append(VR)
+		za_arrays.append(ZA)
+		el_arrays.append(EL)
+
+		sd=data.variables['start_date'][:]
+		st=data.variables['start_time'][:]
+		raw_date = parse_rawdate(sd, st)
+		raw_fmt='%m/%d/%Y %H:%M:%S'
+		dt = datetime.strptime(raw_date,raw_fmt)
+		time_index.append(dt)
+		data.close()
+
+	df = pd.DataFrame(index=time_index,columns=['ZA','VR','EL'])
+	df['ZA']=za_arrays
+	df['VR']=vr_arrays
+	df['EL']=el_arrays
+
+	if scanmode == 'PPI':
+		df.index.name=scanmode+' '+str(angle/10.)
+	else:
+		if angle<=180:
+			df.index.name=scanmode+' '+str(angle)+'-'+str(angle+180)
+		else:
+			df.index.name=scanmode+' '+str(angle)+'-'+str(angle-180)
+
+	if len(time_index2)>0:
+		df['time_az2']=time_index2
+
+	return df
+
+def parse_rawdate(start_date=None, start_time=None, datestring=None):
+
+	if start_date is not None and start_time is not None:
+		date = ''.join(start_date).replace('/01','/20')
+		time = ''.join(start_time)
+		raw_date=date+' '+time
+		return raw_date
+
+def get_mean(arrays,minutes=None, name=None):
+
+	if minutes:
+
+		g = pd.TimeGrouper(str(minutes)+'T')
+		G = arrays.groupby(g)
+
+		gindex = G.indices.items()
+		gindex.sort()
+		mean=[]
+		dates=[]
+		for gx in gindex:
+			gr = arrays.ix[gx[1]].values
+			a=gr[0]
+			
+			if name=='ZA':
+				a=np.power(10.,a/10.)
+			
+			for g in gr[1:]:
+				a=np.dstack((a,g))			
+			
+			if a.ndim == 2:
+				''' in case the hour has only one sweep 
+				creates a singleton (nrows, ncols, 1) '''
+				a=np.expand_dims(a,axis=2)
+			m = np.nanmean(a,axis=2)
+			
+			if name=='ZA':
+				m=10*np.log10(m)
+			mean.append(m)
+			dates.append(gx[0])
+
+			return dates, np.array(mean)
+	else:
+		
+		a=arrays.ix[[0]].values[0]
+		narrays=arrays.shape[0]
+		for n in range(1,narrays):
+			rr=arrays.iloc[[n]].values[0]
+			a=np.dstack((a,rr))
+
+		if name == 'ZA':
+			a=toLinear(a)
+
+		mean = np.nanmean(a,axis=2)
+		
+		if name == 'ZA':
+			mean=toLog10(mean)
+
+		return mean
+
+def toLinear(x):
+
+	return np.power(10., x/10.)
+
+def toLog10(x)	:
+
+	return 10.*np.log10(x)
+		
+def get_count(arrays):
+
+	a=np.isnan(arrays.ix[[0]].values[0])
+	narrays=arrays.shape[0]
+	for n in range(1,narrays):
+		rr=np.isnan(arrays.ix[[n]].values[0])
+		a=np.dstack((a,rr))
+	
+	shape=arrays.ix[[0]].values[0].shape
+	total =np.zeros(shape)+narrays
+	return total - np.sum(a,axis=2)
+
+def get_percent(arrays):
+
+	a=np.isnan(arrays.ix[[0]].values[0])
+	narrays=arrays.shape[0]
+	for n in range(1,narrays):
+		rr=np.isnan(arrays.ix[[n]].values[0])
+		a=np.dstack((a,rr))
+	
+	shape=arrays.ix[[0]].values[0].shape
+	total =np.zeros(shape)+narrays
+	return 100.*(total - np.sum(a,axis=2))/total
+
+def get_max(arrays):
+
+	a=arrays.ix[[0]].values[0]
+	narrays=arrays.shape[0]
+	for n in range(1,narrays):
+		rr=arrays.ix[[n]].values[0]
+		a=np.dstack((a,rr))
+
+	return np.nanmax(a,axis=2)
+
+def add_rings(ax,space_km=10,color='k',mapping=False):
+	
+	from shapely.geometry import Polygon
+	from descartes import PolygonPatch
+
+	for r in range(0, 60+space_km, space_km):
+		if mapping:
+			m=mapping[0]
+			olat=mapping[1]
+			olon=mapping[2]
+			c=Circlem.circle(m, olat, olon, r*1000.)
+			circraw=Polygon(c, linestyle=':')
+			circ=PolygonPatch(circraw, fc='none', ec='b')
+			foo=1
+			textdirection=225
+		else:
+			circ=plt.Circle((0,0),r,fill=False,color=color,label='asd')
+			foo=r
+			textdirection=-5
+
+		ax.add_patch(circ)
+		vert=circ.get_path().vertices
+		print vert
+		x,y =vert[textdirection]
+		ax.text(x*foo, y*foo, str(r),ha='center',va='center',
+				bbox=dict(fc='none', ec='none', pad=2.),
+				clip_on=True)
+
+def add_azimuths(ax,space_deg=30):
+
+	xaz=ax.get_xlim()	
+	yaz=ax.get_ylim()
+	ax.plot(xaz, [0,0],color='k')
+	ax.plot([0,0], yaz,color='k')
+
+
+
+def add_colorbar(ax,im,cbar_ticks):
+
 	divider = make_axes_locatable(ax)
 	cax = divider.append_axes("right", size="2%", pad=0.05)
-	cbar = plt.colorbar(im, cax=cax)
+	cbar = plt.colorbar(im, cax=cax, ticks=cbar_ticks)
+	return cbar
+
+def custom_cmap(cmap_set=None):
+
+	import matplotlib.colors as mcolors
+
+	if cmap_set == 'ppi_vr1':
+		colors1b=plt.cm.Purples_r(np.linspace(0.0,0.7,32))
+		colors1a=plt.cm.RdPu_r(np.linspace(0.1,0.8,32))
+		colors1c=plt.cm.Blues_r(np.linspace(0.0,0.7,31))
+		colors1d=plt.cm.Greens_r(np.linspace(0.0,0.7,31))
+		colors2=plt.cm.jet(np.linspace(0.6,0.9,126))
+		white=np.array([1,1,1,1])
+		colors=np.vstack((colors1a,colors1b,colors1c,colors1d,
+							white,white,white,white,
+							colors2))
+	elif cmap_set == 'ppi_vr2':
+		colors1a=plt.cm.cubehelix(np.linspace(0.0,0.2,32))
+		colors1b=plt.cm.cubehelix(np.linspace(0.4,0.6,32))
+		colors1c=plt.cm.cubehelix(np.linspace(0.7,0.8,31))
+		colors1d=plt.cm.cubehelix(np.linspace(0.9,1.0,31))
+		colors2=plt.cm.jet(np.linspace(0.6,0.9,126))
+		white=np.array([1,1,1,1])
+		colors=np.vstack((colors1a,colors1b,colors1c,colors1d,
+							white,white,white,white,
+							colors2))		
+	elif cmap_set == 'rhi_vr1':
+		colors1=plt.cm.Greens_r(np.linspace(0.0, 0.7, 64))
+		colors2=plt.cm.Blues_r(np.linspace(0.0, 0.7, 64))
+		colors4=plt.cm.RdPu_r(np.linspace(0.1, 0.8, 64))
+		colors3=plt.cm.Purples_r(np.linspace(0, 0.7, 64))
+		colors=np.vstack((colors1,colors2,colors3,colors4))
+	elif cmap_set == 'rhi_vr2':
+		colors1=plt.cm.BrBG_r(np.linspace(0, 0.4, 64))
+		colors2=plt.cm.PiYG_r(np.linspace(0, 0.4, 64))
+		colors3=plt.cm.BrBG(np.linspace(0, 0.4, 64))
+		colors4=plt.cm.RdBu(np.linspace(0., 0.4, 64))
+		colors=np.vstack((colors1,colors2,colors3,colors4))
+
+	newcmap=mcolors.LinearSegmentedColormap.from_list('newCmap', colors)
+
+	return newcmap
+
+def cart2geo(cartLine, orientation, radarLoc):
+
+	from geographiclib.geodesic import Geodesic
+
+	out=[]
+	for p in cartLine:
+		if p>=0: 
+			if orientation=='WE':
+				az=90
+			else:
+				az=360
+		else:
+			if orientation=='WE':
+				az=270
+			else:
+				az=180
+		gd = Geodesic.WGS84.Direct(radarLoc[0], radarLoc[1], az,  np.abs(p)*1000.)	
+		if orientation == 'WE':
+			out.append(gd['lon2'])
+		else:
+			out.append(gd['lat2'])
+	return out
+
+def add_locations(ax, m,names):
+
+	locs={'FRS':(38.505260, -123.229607),
+			'BBY':(38.3167, -123.0667),
+			'CZD':(38.6181,-123.228),
+			'Petaluma':(38.232,-122.636),
+			'B13':(38.233505, -123.30429)}
+
+	if names=='all':
+		names=locs.keys()
+
+	for n in names:
+		x, y=m(*locs[n][::-1])
+		m.plot(x,y,marker='o',color='k')
