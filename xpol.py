@@ -21,10 +21,22 @@ from mpl_toolkits.basemap import Basemap
 
 def plot(array,ax=None,show=True,name=None,smode=None,
 			date=None, elev=None, title=None, add_azline=None,
-			colorbar=True,extent=None,second_date=None):
+			colorbar=True,extent=None,second_date=None,case=None,
+			add_yticklabs=False):
 
-	if not ax:
+	if ax is None:
 		fig,ax=plt.subplots()
+
+	if extent is None:
+		if smode == 'rhi':
+			if case in [11, 13,14]:
+				extent=[-30,30,0.05,11]
+			elif case == 12:
+				extent=[-30,20,0.05,11]
+			else:
+				extent=[-40,20,0.05,11]	
+		elif smode == 'ppi':
+			extent=[-58,45, -58,33]
 
 	if name=='ZA':
 		vmin,vmax = [-10,45]
@@ -57,15 +69,11 @@ def plot(array,ax=None,show=True,name=None,smode=None,
 					extent=extent,
 					aspect='auto')
 
-	ax_id=ax.get_gid()
-	set_yticklabs=False
-	if ax_id in ['ax1']:
-	 	set_yticklabs=True
-		
-
 	if smode == 'ppi':
 		add_rings(ax,space_km=10,color='k')
 		add_azimuths(ax,space_deg=30)
+		add_ring(ax, radius=57.8, color=(0.85,0.85,0.85), lw=10)
+		add_circle(ax, radius=60, color=(0.85,0.85,0.85))		
 		if add_azline:
 			x=np.arange(-40,40)
 			if add_azline in [0, 180]:
@@ -78,22 +86,23 @@ def plot(array,ax=None,show=True,name=None,smode=None,
 			ax.plot(x,y,'-',color='red')
 		ax.set_xlim([extent[0], extent[1]])
 		ax.set_ylim([extent[2], extent[3]])
-		ax.set_xticklabels([''])
-		ax.set_yticklabels([''])
+		ax.set_xticks([])
+		ax.set_yticks([])
 		ax.grid(False)
+		# ax.set_axis_bgcolor((0.5,0.5,0.5))
+
 	elif smode == 'rhi':
 		# ax.set_xlim([-40, 20])
 		ax.set_ylim([0, 11])
 		yticks=np.arange(0.5,11.5,1.0)
 		ax.set_yticks(yticks)
-		if set_yticklabs:
+		if add_yticklabs:
 			yticklabels=np.array([str(y) for y in yticks])
 			# yticklabels[::2]=''
 			ax.set_yticklabels(yticklabels)
 		else:
 			ax.set_yticklabels([''])
 		ax.grid(True)
-		# plt.subplots_adjust(left=0.05, right=0.95)
 	plt.draw()
 	if date:
 		plt.text(0.0,1.01, date,ha='left', transform=ax.transAxes)
@@ -148,7 +157,7 @@ def plotm(array,ax=None,show=True,name=None):
 
 
 def plot_mean(means,dates,name,smode,elev=None, title=None,colorbar=True):
-	print title
+	
 	xpolmean=PdfPages('xpol_meanscan_'+name.lower()+'.pdf')
 	ntimes,_,_=means.shape
 	for n in range(ntimes):
@@ -177,7 +186,7 @@ def plot_single(xpol_dataframe, name=None,smode=None,
 	dates=xpol_dataframe.index
 	single=xpol_dataframe[name]
 	ntimes = single.shape[0]
-	title=xpol_dataframe.index.name+' '+name
+	title='C'+str(case).zfill(2)+' '+xpol_dataframe.index.name+' '+name
 	print title
 	if 'time_az2' in xpol_dataframe:
 		second_dates=xpol_dataframe['time_az2']
@@ -193,33 +202,36 @@ def plot_single(xpol_dataframe, name=None,smode=None,
 	for n in range(ntimes):
 		if smode in ['ppi', 'PPI']:
 			fig,ax = plt.subplots(figsize=(7,6))
-			plot(single.ix[n],ax=ax, show=False,name=name,smode='ppi',
-				date=dates[n],colorbar=colorbar,extent=ppi_extent, title=title)
+			ar=single.ix[n]
+			valid = ar.size - np.sum(np.isnan(ar)) # number of non-nan points
+			plot(ar,ax=ax, show=False,name=name,smode='ppi',
+				date=dates[n],colorbar=colorbar,extent=ppi_extent, title=title+' points='+str(valid))
 			plt.subplots_adjust(left=0.05, right=0.93, bottom=0.05, top=0.95)					
 
 		if smode in ['rhi', 'RHI']:
 			fig,ax = plt.subplots(figsize=(10,4))
 			ax.set_gid('ax1')
+			ar=single.ix[n]
+			valid = ar.size - np.sum(np.isnan(ar)) # number of non-nan points
 			if name == 'VR':
 				elev_angle=get_max(xpol_dataframe['EL'])
-				plot(single.ix[n],ax=ax, show=False,name=name,smode='rhi',
+				plot(ar, ax=ax, show=False,name=name,smode='rhi',
 					date=dates[n],elev=elev_angle,colorbar=colorbar,
-					extent=rhi_extent,	second_date=second_dates[n], title=title)
+					extent=rhi_extent,	second_date=second_dates[n], title=title+' points='+str(valid))
 
 			elif name == 'ZA':
 				if second_dates is not None:
-					plot(single.ix[n],ax=ax, show=False,name=name,smode='rhi',
+					plot(ar, ax=ax, show=False,name=name,smode='rhi',
 						date=dates[n],colorbar=colorbar, extent=rhi_extent,
-						second_date=second_dates[n],title=title)	
+						second_date=second_dates[n],title=title+' points='+str(valid))	
 				else:
-					plot(single.ix[n],ax=ax, show=False,name=name,smode='rhi',
-						date=dates[n],colorbar=colorbar, extent=rhi_extent, title=title)	
+					plot(ar, ax=ax, show=False,name=name,smode='rhi',
+						date=dates[n],colorbar=colorbar, extent=rhi_extent, title=title+' points='+str(valid))	
 			ax.set_xlabel('Distance from radar [km]')
 			ax.set_ylabel('Altitude AGL [km]')
 			plt.subplots_adjust(left=0.08, right=0.95, bottom=0.12)
 
 		print 'Plotting '+smode+' '+dates[n].strftime('%Y-%b-%d %H:%M:%S')
-
 
 		xpolsingle.savefig()
 		plt.close('all')
@@ -323,7 +335,7 @@ def parse_rawdate(start_date=None, start_time=None, datestring=None):
 		raw_date=date+' '+time
 		return raw_date
 
-def get_mean(arrays,minutes=None, name=None):
+def get_mean(arrays,minutes=None, name=None,good_thres=1000):
 
 	if minutes:
 
@@ -358,11 +370,18 @@ def get_mean(arrays,minutes=None, name=None):
 			return dates, np.array(mean)
 	else:
 		
-		a=arrays.ix[[0]].values[0]
 		narrays=arrays.shape[0]
-		for n in range(1,narrays):
-			rr=arrays.iloc[[n]].values[0]
-			a=np.dstack((a,rr))
+		good=0
+		for n in range(0,narrays):
+			if n==0:
+				a=arrays.iloc[[n]].values[0] # first value
+				valid = a.size - np.sum(np.isnan(a)) # number of non-nan points
+				if valid>good_thres: good+=1
+			else:
+				rr=arrays.iloc[[n]].values[0]
+				valid = rr.size - np.sum(np.isnan(rr)) # number of non-nan points
+				if valid>good_thres: good+=1
+				a=np.dstack((a,rr))
 
 		if name == 'ZA':
 			a=toLinear(a)
@@ -372,7 +391,8 @@ def get_mean(arrays,minutes=None, name=None):
 		if name == 'ZA':
 			mean=toLog10(mean)
 
-		return mean
+
+		return mean, good
 
 def toLinear(x):
 
@@ -421,28 +441,40 @@ def add_rings(ax,space_km=10,color='k',mapping=False):
 	from shapely.geometry import Polygon
 	from descartes import PolygonPatch
 
-	for r in range(0, 60+space_km, space_km):
-		if mapping:
-			m=mapping[0]
-			olat=mapping[1]
-			olon=mapping[2]
-			c=Circlem.circle(m, olat, olon, r*1000.)
-			circraw=Polygon(c, linestyle=':')
-			circ=PolygonPatch(circraw, fc='none', ec='b')
-			foo=1
-			textdirection=225
-		else:
-			circ=plt.Circle((0,0),r,fill=False,color=color,label='asd')
-			foo=r
-			textdirection=-5
+	# textdirection=225	
+	textdirection=-5
 
-		ax.add_patch(circ)
-		vert=circ.get_path().vertices
-		print vert
+	for r in range(0, 60+space_km, space_km):
+		
+		ring = add_ring(ax=ax, radius=r, mapping=mapping, color=color)
+		vert=ring.get_path().vertices
 		x,y =vert[textdirection]
-		ax.text(x*foo, y*foo, str(r),ha='center',va='center',
+		ax.text(x*r, y*r, str(r),ha='center',va='center',
 				bbox=dict(fc='none', ec='none', pad=2.),
-				clip_on=True)
+				clip_on=True)	
+
+def add_ring(ax=None, radius=None, mapping=False, color=None, lw=1):
+
+	if mapping:
+		m=mapping[0]
+		olat=mapping[1]
+		olon=mapping[2]
+		c=Circlem.circle(m, olat, olon, radius*1000.)
+		circraw=Polygon(c, linestyle=':')
+		circ=PolygonPatch(circraw, fc='none', ec='b')
+		# foo=1
+	else:
+		circ=plt.Circle((0,0),radius,fill=False,color=color, linewidth=lw)
+		# foo=radius
+
+	ax.add_patch(circ)
+
+	return circ
+
+def add_circle(ax=None, radius=None, color=None):
+
+	circ=plt.Circle((0,0),radius,fill=True,color=color,zorder=0)
+	ax.add_patch(circ)
 
 def add_azimuths(ax,space_deg=30):
 

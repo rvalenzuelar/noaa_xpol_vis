@@ -6,30 +6,41 @@ import xpol
 
 '''	printing single and mean values
 '''
-case=11
+setcase={	8:[0.5, 180],
+			9:[0.5, 180],
+		    10:[0.5, 180],
+		    11:[0.5, 180],
+		    12:[0.5, 147],
+		    13:[0.5, 180],
+		    14:[0.5, 180]}
+
 o='c{}_xpol_singlescan_{}_{}_{}.pdf'
 
+# case=8
 
-field = 'ZA'
+for case in range(9,15):
+	
+	elev,azim=setcase[case]
 
-rhis=xpol.get_data(case,'RHI',180)
-oname=o.format(str(case).zfill(2), 'rhi', str(180), field)
-xpol.plot_single(rhis, name=field, smode='rhi',case=case, saveas=oname)
-# xpol.plot_single(rhis.ix[:3,:], name=field, smode='rhi',case=case, saveas=oname)
+	field = 'ZA'
 
-# ppis=xpol.get_data(case,'PPI',0.5)
-# oname=o.format(str(case).zfill(2), 'ppi', str(0.5), field)
-# xpol.plot_single(ppis, name=field, smode='ppi', case=case, saveas=oname)
-# # # xpol.plot_single(ppis.ix[:3,:], name=field, smode='ppi', case=case)
+	rhis=xpol.get_data(case,'RHI',azim)
+	oname=o.format(str(case).zfill(2), 'rhi', str(azim), field)
+	xpol.plot_single(rhis, name=field, smode='rhi',case=case, saveas=oname)
+	# xpol.plot_single(rhis.ix[:3,:], name=field, smode='rhi',case=case, saveas=oname)
 
-field = 'VR'
+	ppis=xpol.get_data(case,'PPI',elev)
+	oname=o.format(str(case).zfill(2), 'ppi', str(elev), field)
+	xpol.plot_single(ppis, name=field, smode='ppi', case=case, saveas=oname)
 
-rhis=xpol.get_data(case,'RHI',180)
-oname=o.format(str(case).zfill(2), 'rhi', str(180), field)
-xpol.plot_single(rhis, name=field, smode='rhi', case=case, saveas=oname)
-# xpol.plot_single(rhis.ix[:3,:], name=field, smode='rhi', case=case, saveas=oname)
 
-# ppis=xpol.get_data(case,'PPI',0.5)
-# oname=o.format(str(case).zfill(2), 'ppi', str(0.5), field)
-# xpol.plot_single(ppis,name=field, smode='ppi', case=case, saveas=oname)
-# # xpol.plot_single(ppis.ix[:3,:],name=field, smode='ppi', case=case)
+	field = 'VR'
+
+	rhis=xpol.get_data(case,'RHI',azim)
+	oname=o.format(str(case).zfill(2), 'rhi', str(azim), field)
+	xpol.plot_single(rhis, name=field, smode='rhi', case=case, saveas=oname)
+
+	ppis=xpol.get_data(case,'PPI',elev)
+	oname=o.format(str(case).zfill(2), 'ppi', str(elev), field)
+	xpol.plot_single(ppis,name=field, smode='ppi', case=case, saveas=oname)
+
