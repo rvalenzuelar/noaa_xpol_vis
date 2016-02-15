@@ -194,7 +194,9 @@ def plot_single(xpol_dataframe, name=None,smode=None,
 		second_dates=['']*ntimes
 
 	if case in [13,14]:
-		rhi_extent=[-30,30,0.05,11]	
+		rhi_extent=[-30,30,0.05,11]
+	elif case == 12:
+		rhi_extent=[-22,30,0.05,11]
 	else:
 		rhi_extent=[-40,20,0.05,11]	
 	ppi_extent=[-58,45, -58,33]
@@ -213,12 +215,12 @@ def plot_single(xpol_dataframe, name=None,smode=None,
 			ax.set_gid('ax1')
 			ar=single.ix[n]
 			valid = ar.size - np.sum(np.isnan(ar)) # number of non-nan points
+
 			if name == 'VR':
 				elev_angle=get_max(xpol_dataframe['EL'])
 				plot(ar, ax=ax, show=False,name=name,smode='rhi',
 					date=dates[n],elev=elev_angle,colorbar=colorbar,
 					extent=rhi_extent,	second_date=second_dates[n], title=title+' points='+str(valid))
-
 			elif name == 'ZA':
 				if second_dates is not None:
 					plot(ar, ax=ax, show=False,name=name,smode='rhi',
@@ -227,6 +229,7 @@ def plot_single(xpol_dataframe, name=None,smode=None,
 				else:
 					plot(ar, ax=ax, show=False,name=name,smode='rhi',
 						date=dates[n],colorbar=colorbar, extent=rhi_extent, title=title+' points='+str(valid))	
+
 			ax.set_xlabel('Distance from radar [km]')
 			ax.set_ylabel('Altitude AGL [km]')
 			plt.subplots_adjust(left=0.08, right=0.95, bottom=0.12)
@@ -267,7 +270,10 @@ def get_data(case,scanmode,angle):
 			ZA=np.squeeze(data.variables['ZA'][0,:,1,:])/scale
 			EL=np.squeeze(data.variables['EL'][0,:,1,:])/scale						
 			' invert sign to represent northward wind from southward azimuths'
-			VR=VR*-1
+			if case == 12:
+				if angle == 147: VR=VR*-1
+			else:
+				VR=VR*-1
 
 		' add second complemental azimuth in RHI '
 		if case in [11, 13, 14] and scanmode == 'RHI':
@@ -317,8 +323,10 @@ def get_data(case,scanmode,angle):
 	if scanmode == 'PPI':
 		df.index.name=scanmode+' '+str(angle/10.)
 	else:
-		if angle<=180:
+		if angle<=180 and angle>90:
 			df.index.name=scanmode+' '+str(angle)+'-'+str(angle+180)
+		elif angle<=90 and angle>0:
+			df.index.name=scanmode+' '+str(angle+180)+'-'+str(angle)
 		else:
 			df.index.name=scanmode+' '+str(angle)+'-'+str(angle-180)
 

@@ -10,7 +10,7 @@ setcase={	8:[0.5, 180],
 			9:[0.5, 180],
 		    10:[0.5, 180],
 		    11:[0.5, 180],
-		    12:[0.5, 147],
+		    12:[0.5, 6],
 		    13:[0.5, 180],
 		    14:[0.5, 180]}
 
@@ -18,8 +18,8 @@ o='c{}_xpol_singlescan_{}_{}_{}.pdf'
 
 # case=8
 
-for case in range(9,15):
-	
+for case in range(12,13):
+
 	elev,azim=setcase[case]
 
 	field = 'ZA'
@@ -29,9 +29,9 @@ for case in range(9,15):
 	xpol.plot_single(rhis, name=field, smode='rhi',case=case, saveas=oname)
 	# xpol.plot_single(rhis.ix[:3,:], name=field, smode='rhi',case=case, saveas=oname)
 
-	ppis=xpol.get_data(case,'PPI',elev)
-	oname=o.format(str(case).zfill(2), 'ppi', str(elev), field)
-	xpol.plot_single(ppis, name=field, smode='ppi', case=case, saveas=oname)
+	# ppis=xpol.get_data(case,'PPI',elev)
+	# oname=o.format(str(case).zfill(2), 'ppi', str(elev), field)
+	# xpol.plot_single(ppis, name=field, smode='ppi', case=case, saveas=oname)
 
 
 	field = 'VR'
@@ -39,8 +39,9 @@ for case in range(9,15):
 	rhis=xpol.get_data(case,'RHI',azim)
 	oname=o.format(str(case).zfill(2), 'rhi', str(azim), field)
 	xpol.plot_single(rhis, name=field, smode='rhi', case=case, saveas=oname)
+	# xpol.plot_single(rhis.ix[:3,:], name=field, smode='rhi', case=case, saveas=oname)
 
-	ppis=xpol.get_data(case,'PPI',elev)
-	oname=o.format(str(case).zfill(2), 'ppi', str(elev), field)
-	xpol.plot_single(ppis,name=field, smode='ppi', case=case, saveas=oname)
+	# ppis=xpol.get_data(case,'PPI',elev)
+	# oname=o.format(str(case).zfill(2), 'ppi', str(elev), field)
+	# xpol.plot_single(ppis,name=field, smode='ppi', case=case, saveas=oname)
 

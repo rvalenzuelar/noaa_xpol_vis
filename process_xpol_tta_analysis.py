@@ -13,16 +13,15 @@ setcase={	8:[0.5, 180],
 			9:[0.5, 180],
 		    10:[0.5, 180],
 		    11:[0.5, 180],
-		    12:[0.5, 147],
+		    12:[0.5, 6],
 		    13:[0.5, 180],
 		    14:[0.5, 180]}
 
 closeall=True
 
-for key,val in setcase.iteritems():
+for case in range(12,13):
 
-	case=key
-	elevation,azimuth=val
+	elevation,azimuth=setcase[case]
 
 	tta_times=wp.get_tta_times(case=str(case))
 	print tta_times
