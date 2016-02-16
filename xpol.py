@@ -22,7 +22,7 @@ from mpl_toolkits.basemap import Basemap
 def plot(array,ax=None,show=True,name=None,smode=None,
 			date=None, elev=None, title=None, add_azline=None,
 			colorbar=True,extent=None,second_date=None,case=None,
-			add_yticklabs=False):
+			add_yticklabs=False, vmax=None, textbox=None):
 
 	if ax is None:
 		fig,ax=plt.subplots()
@@ -53,7 +53,12 @@ def plot(array,ax=None,show=True,name=None,smode=None,
 	elif name == 'percent':
 		vmin,vmax = [0,100]
 		cmap='inferno'
-		cbar_ticks=range(vmin,vmax+10,10)		
+		cbar_ticks=range(vmin,vmax+10,10)
+	elif name == 'freq':
+		# vmin,vmax = [0, 60]
+		vmin=0
+		cmap='inferno'
+		cbar_ticks=range(0,110,10)
 
 	if elev is not None and name == 'VR':
 		array = array/np.cos(np.radians(elev))
@@ -63,11 +68,13 @@ def plot(array,ax=None,show=True,name=None,smode=None,
 		cmap=custom_cmap('rhi_vr1')
 		cbar_ticks=range(vmin,vmax+10,10)
 
+
 	im=ax.imshow(array,interpolation='none', origin='lower',
 					vmin=vmin,vmax=vmax,
 					cmap=cmap,
 					extent=extent,
 					aspect='auto')
+
 
 	if smode == 'ppi':
 		add_rings(ax,space_km=10,color='k')
@@ -90,7 +97,6 @@ def plot(array,ax=None,show=True,name=None,smode=None,
 		ax.set_yticks([])
 		ax.grid(False)
 		# ax.set_axis_bgcolor((0.5,0.5,0.5))
-
 	elif smode == 'rhi':
 		# ax.set_xlim([-40, 20])
 		ax.set_ylim([0, 11])
@@ -103,7 +109,9 @@ def plot(array,ax=None,show=True,name=None,smode=None,
 		else:
 			ax.set_yticklabels([''])
 		ax.grid(True)
+	
 	plt.draw()
+
 	if date:
 		plt.text(0.0,1.01, date,ha='left', transform=ax.transAxes)
 	if second_date:
@@ -112,9 +120,12 @@ def plot(array,ax=None,show=True,name=None,smode=None,
 		plt.text(0.4,1.01, title,ha='left', transform=ax.transAxes)
 	if colorbar:
 		add_colorbar(ax,im,cbar_ticks)
+	if textbox:
+		props = dict(facecolor='white')
+		plt.text(0.6,0.9,textbox, transform=ax.transAxes, bbox=props)
 
-	if show:
-		plt.show(block=False)
+	# if show:
+		# plt.show(block=False)
 
 def plotm(array,ax=None,show=True,name=None):
 
@@ -240,13 +251,13 @@ def plot_single(xpol_dataframe, name=None,smode=None,
 		plt.close('all')
 	xpolsingle.close()
 
-def get_data(case,scanmode,angle):
+def get_data(case,scanmode,angle,homedir=None):
 
 	if scanmode == 'PPI':
-		basestr='/home/rvalenzuela/XPOL/netcdf/c{0}/PPI/elev{1}/'
+		basestr=homedir+'/XPOL/netcdf/c{0}/PPI/elev{1}/'
 		angle=angle*10
 	elif scanmode == 'RHI':
-		basestr='/home/rvalenzuela/XPOL/netcdf/c{0}/RHI/az{1}/'
+		basestr=homedir+'/XPOL/netcdf/c{0}/RHI/az{1}/'
 
 	basedir=basestr.format(str(case).zfill(2), str(int(angle)).zfill(3))
 	cdf_files=glob(basedir+'*.cdf')
@@ -399,8 +410,28 @@ def get_mean(arrays,minutes=None, name=None,good_thres=1000):
 		if name == 'ZA':
 			mean=toLog10(mean)
 
-
 		return mean, good
+
+def get_dbz_freq(arrays,thres=20):
+
+	narrays=arrays.shape[0]
+
+	for n in range(0,narrays):
+		a=arrays.iloc[[n]].values[0]
+		cond = (a >= thres) + 0 # convert to Int boolean
+		if n == 0:
+			COND=np.zeros(a.shape)
+			COND = np.dstack((COND, cond))
+		else:
+			COND = np.dstack((COND, cond))
+
+	freq = (np.sum(COND,axis=2)/narrays)*100.
+
+	mean,_ = get_mean(arrays, name='ZA')
+	
+	freq[np.isnan(mean)]=np.nan
+
+	return freq
 
 def toLinear(x):
 
