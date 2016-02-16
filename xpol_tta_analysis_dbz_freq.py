@@ -24,7 +24,7 @@ closeall=False
 
 homedir=os.path.expanduser('~')
 
-for case in range(8,15):
+for case in range(8,9):
 
 	elevation,azimuth,dbz_thres,maxv =setcase[case]
 
