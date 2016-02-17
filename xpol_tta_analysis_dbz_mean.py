@@ -49,13 +49,9 @@ for case in range(8,9):
 	
 	if ppis_tta.size>0:
 		print 'TTA'
-		# ppi_tta_mean,good=xpol.get_mean(ppis_tta['ZA'],name='ZA')
-		# xpol.plot(ppi_tta_mean, ax=ax[2], name='ZA',smode='ppi', colorbar=False, case=case)
-
-		dbz_freq = xpol.get_dbz_freq(ppis_tta['ZA'], thres=dbz_thres)
-		xpol.plot(dbz_freq, ax=ax[2], name='freq',smode='ppi', colorbar=False, case=case, 
-				   vmax=maxv)		
-		
+		ppi_tta_mean,good=xpol.get_mean(ppis_tta['ZA'],name='ZA')
+		xpol.plot(ppi_tta_mean, ax=ax[2], name='ZA',smode='ppi', colorbar=False, case=case)
+	
 		ppi_tta_mean,good=xpol.get_mean(ppis_tta['VR'],name='VR')
 		xpol.plot(ppi_tta_mean, ax=ax[0], name='VR',smode='ppi', colorbar=False, case=case)
 
@@ -73,13 +69,9 @@ for case in range(8,9):
 	
 	if ppis_notta.size>0:
 		print 'NO TTA'
-		# ppi_notta_mean,good = xpol.get_mean(ppis_notta['ZA'],name='ZA')
-		# xpol.plot(ppi_notta_mean, ax=ax[3], name='ZA',smode='ppi', colorbar=True, case=case)
-		
-		dbz_freq = xpol.get_dbz_freq(ppis_notta['ZA'], thres=dbz_thres)
-		xpol.plot(dbz_freq, ax=ax[3], name='freq',smode='ppi', colorbar=True, case=case, 
-				vmax=maxv, textbox='dBz Threshold:'+ str(dbz_thres))
-		
+		ppi_notta_mean,good = xpol.get_mean(ppis_notta['ZA'],name='ZA')
+		xpol.plot(ppi_notta_mean, ax=ax[3], name='ZA',smode='ppi', colorbar=True, case=case)
+				
 		ppi_notta_mean,good = xpol.get_mean(ppis_notta['VR'],name='VR')
 		xpol.plot(ppi_notta_mean,ax=ax[1],  name='VR',smode='ppi', colorbar=True, case=case)
 
@@ -121,28 +113,21 @@ for case in range(8,9):
 	rhis_notta=rhis.iloc[notta_idxs]
 	if rhis_notta.size>0:
 		print 'NO TTA'
-		# rhi_notta_mean, good=xpol.get_mean(rhis_notta['ZA'],name='ZA')
-		# xpol.plot(rhi_notta_mean, ax=ax[3], name='ZA',smode='rhi', colorbar=True, case=case)
-
-		dbz_freq = xpol.get_dbz_freq(rhis_notta['ZA'], thres=dbz_thres)
-		xpol.plot(dbz_freq, ax=ax[3], name='freq',smode='rhi', colorbar=True, case=case, 
-				   vmax=maxv,textbox='dBz Threshold:'+ str(dbz_thres))
+		rhi_notta_mean, good=xpol.get_mean(rhis_notta['ZA'],name='ZA')
+		xpol.plot(rhi_notta_mean, ax=ax[3], name='ZA',smode='rhi', colorbar=True, case=case)
 
 		rhi_notta_mean, good=xpol.get_mean(rhis_notta['VR'],name='VR')
 		xpol.plot(rhi_notta_mean,ax=ax[1],  name='VR',smode='rhi', colorbar=True, case=case, elev=elev)
 		n=' (n='+str(rhis_notta.index.size)+', good='+str(good)+')'
+
 	ax[1].set_title('NO-TTA average'+n)
 
 	rhis_tta=rhis.iloc[tta_idxs]
 	if rhis_tta.size>0:
 		print 'TTA'
-		# rhi_tta_mean, good=xpol.get_mean(rhis_tta['ZA'],name='ZA')
-		# xpol.plot(rhi_tta_mean, ax=ax[2], name='ZA',smode='rhi', colorbar=False, case=case,
-		# 		add_yticklabs=True)
-
-		dbz_freq = xpol.get_dbz_freq(rhis_tta['ZA'], thres=dbz_thres)
-		xpol.plot(dbz_freq, ax=ax[2], name='freq',smode='rhi', colorbar=False, case=case, 
-				   vmax=maxv, textbox='dBz Threshold:'+ str(dbz_thres))
+		rhi_tta_mean, good=xpol.get_mean(rhis_tta['ZA'],name='ZA')
+		xpol.plot(rhi_tta_mean, ax=ax[2], name='ZA',smode='rhi', colorbar=False, case=case,
+				add_yticklabs=True)
 
 		rhi_tta_mean, good=xpol.get_mean(rhis_tta['VR'],name='VR')
 		xpol.plot(rhi_tta_mean, ax=ax[0], name='VR',smode='rhi', colorbar=False, case=case, 
@@ -158,6 +143,7 @@ for case in range(8,9):
 		ax[0].text(0.5,0.5, 'NO DATA', transform=ax[0].transAxes, ha='center', weight='bold')
 		ax[2].text(0.5,0.5, 'NO DATA', transform=ax[2].transAxes, ha='center', weight='bold')
 		n=''
+		
 	ax[0].set_title('TTA average'+n)
 	ax[0].set_ylabel('Altitude MSL [km]', fontsize=14)
 	ax[2].set_xlabel('Distance from the radar [km]', fontsize=14)
@@ -170,11 +156,11 @@ for case in range(8,9):
 	fig.suptitle(title, fontsize=14)
 	plt.subplots_adjust(hspace=0.05, wspace=0.05, left=0.05, right=0.97)
 
-	o='c{}_xpol_tta_average_{}_{}.pdf'
-	saveas=o.format(str(case).zfill(2), 'rhi', str(azimuth).zfill(3))
-	xpolpdf = PdfPages(saveas)
-	xpolpdf.savefig()
-	xpolpdf.close()
+	# o='c{}_xpol_tta_average_{}_{}.pdf'
+	# saveas=o.format(str(case).zfill(2), 'rhi', str(azimuth).zfill(3))
+	# xpolpdf = PdfPages(saveas)
+	# xpolpdf.savefig()
+	# xpolpdf.close()
 
 	if closeall:
 		plt.close('all')

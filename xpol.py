@@ -55,10 +55,17 @@ def plot(array,ax=None,show=True,name=None,smode=None,
 		cmap='inferno'
 		cbar_ticks=range(vmin,vmax+10,10)
 	elif name == 'freq':
-		# vmin,vmax = [0, 60]
 		vmin=0
 		cmap='inferno'
 		cbar_ticks=range(0,110,10)
+	elif name == 'ratio':
+		vmin=0
+		cmap='viridis'
+		cbar_ticks=np.arange(0,vmax+0.2,0.2)
+	elif name == 'rainrate':
+		vmin=0
+		cmap='viridis_r'
+		cbar_ticks=np.arange(0,vmax+10,10)
 
 	if elev is not None and name == 'VR':
 		array = array/np.cos(np.radians(elev))
@@ -191,7 +198,8 @@ def plot_mean(means,dates,name,smode,elev=None, title=None,colorbar=True):
 	xpolmean.close()
 
 def plot_single(xpol_dataframe, name=None,smode=None,
-				colorbar=True,case=None, saveas=None):
+				colorbar=True,case=None, saveas=None,
+				convert=None, vmax=None):
 
 	xpolsingle = PdfPages(saveas)
 	dates=xpol_dataframe.index
@@ -217,8 +225,13 @@ def plot_single(xpol_dataframe, name=None,smode=None,
 			fig,ax = plt.subplots(figsize=(7,6))
 			ar=single.ix[n]
 			valid = ar.size - np.sum(np.isnan(ar)) # number of non-nan points
-			plot(ar,ax=ax, show=False,name=name,smode='ppi',
-				date=dates[n],colorbar=colorbar,extent=ppi_extent, title=title+' points='+str(valid))
+			if convert == 'to_rainrate':
+				ar = get_rainrate(ar, rate='hour')
+				plot(ar, ax=ax, show=False,name='rainrate',smode='ppi', date=dates[n],colorbar=colorbar,
+						extent=ppi_extent, title=title+' points='+str(valid), vmax=vmax)				
+			else:
+				plot(ar, ax=ax, show=False,name=name,smode='ppi', date=dates[n],colorbar=colorbar,
+						extent=ppi_extent, title=title+' points='+str(valid))
 			plt.subplots_adjust(left=0.05, right=0.93, bottom=0.05, top=0.95)					
 
 		if smode in ['rhi', 'RHI']:
@@ -426,12 +439,47 @@ def get_dbz_freq(arrays,thres=20):
 			COND = np.dstack((COND, cond))
 
 	freq = (np.sum(COND,axis=2)/narrays)*100.
-
 	mean,_ = get_mean(arrays, name='ZA')
-	
 	freq[np.isnan(mean)]=np.nan
 
 	return freq
+
+def get_dbz_precip_accum(arrays):
+
+	narrays=arrays.shape[0]
+
+	for n in range(0,narrays):
+		a=arrays.iloc[[n]].values[0]
+		pp=get_rainrate(a, rate='minute') #[mm min^-1]
+		timestamp = arrays.iloc[[n]].index[0]
+		mins=timestamp.minute
+		if n == 0:
+			pp=pp*mins #[mm]
+			pparray=np.zeros(pp.shape)
+			pparray=np.dstack((pparray, pp))
+			min0=mins
+		else:
+			mins2=np.abs(mins-min0)
+			pp=pp*mins2 #[mm]
+			pparray=np.dstack((pparray, pp))
+			min0=mins
+			
+
+	pp_acum=np.nansum(pparray, axis=2)
+	mean,_ = get_mean(arrays, name='ZA')
+	pp_acum[np.isnan(mean)]=np.nan
+	return pp_acum
+
+
+def get_rainrate(array, rate=None):
+	' uses Matrosov et al (2005) eq 10'
+
+	linear = toLinear(array) # [mm^6 m^-3]
+	rainrate = np.power(linear/180., 10/14.) #[mm h^-1]
+	if rate == 'hour':
+		return rainrate
+	elif rate == 'minute':
+		return rainrate / 60. # [mm min^-1]
 
 def toLinear(x):
 
