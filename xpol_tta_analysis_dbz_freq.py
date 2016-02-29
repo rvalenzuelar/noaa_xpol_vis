@@ -20,11 +20,11 @@ setcase={	 8:[0.5, 180, 10, 50],
 		    13:[0.5, 180, 25, 100],
 		    14:[0.5, 180, 30, 60]}
 
-closeall=False
+closeall=True
 
 homedir=os.path.expanduser('~')
 
-for case in range(9,10):
+for case in range(8,15):
 
 	elevation,azimuth,dbz_thres,maxv =setcase[case]
 
@@ -74,7 +74,7 @@ for case in range(9,10):
 
 		dbz_freq = xpol.get_dbz_freq(ppis_notta['ZA'], thres=dbz_thres)
 		xpol.plot(dbz_freq, ax=ax[3], name='freq',smode='ppi', colorbar=True, case=case, 
-				vmax=maxv, textbox='dBz Threshold:'+ str(dbz_thres))
+				vmax=maxv, textbox='dBZ Threshold:'+ str(dbz_thres))
 		
 		ppi_notta_mean,good = xpol.get_mean(ppis_notta['VR'],name='VR')
 		xpol.plot(ppi_notta_mean,ax=ax[1],  name='VR',smode='ppi', colorbar=True, case=case)
@@ -91,11 +91,12 @@ for case in range(9,10):
 	fig.suptitle(title, fontsize=14)
 	plt.subplots_adjust(hspace=0.05, wspace=0.1,left=0.05, right=0.95,bottom=0.05)
 
-	# o='c{}_xpol_tta_average_{}_{}.pdf'
-	# saveas=o.format(str(case).zfill(2), 'ppi', str(elevation*10).zfill(3))
-	# xpolpdf = PdfPages(saveas)
-	# xpolpdf.savefig()
-	# xpolpdf.close()
+	if closeall:
+		o='c{}_xpol_tta_average_{}_{}.pdf'
+		saveas=o.format(str(case).zfill(2), 'ppi', str(elevation*10).zfill(3))
+		xpolpdf = PdfPages(saveas)
+		xpolpdf.savefig()
+		xpolpdf.close()
 
 
 	' RHIs'
@@ -120,7 +121,7 @@ for case in range(9,10):
 
 		dbz_freq = xpol.get_dbz_freq(rhis_notta['ZA'], thres=dbz_thres)
 		xpol.plot(dbz_freq, ax=ax[3], name='freq',smode='rhi', colorbar=True, case=case, 
-				   vmax=maxv,textbox='dBz Threshold:'+ str(dbz_thres))
+				   vmax=maxv,textbox='dBZ Threshold:'+ str(dbz_thres))
 
 		rhi_notta_mean, good=xpol.get_mean(rhis_notta['VR'],name='VR')
 		xpol.plot(rhi_notta_mean,ax=ax[1],  name='VR',smode='rhi', colorbar=True, case=case, elev=elev)
@@ -133,7 +134,7 @@ for case in range(9,10):
 
 		dbz_freq = xpol.get_dbz_freq(rhis_tta['ZA'], thres=dbz_thres)
 		xpol.plot(dbz_freq, ax=ax[2], name='freq',smode='rhi', colorbar=False, case=case, 
-				   vmax=maxv, textbox='dBz Threshold:'+ str(dbz_thres))
+				   vmax=maxv)
 
 		rhi_tta_mean, good=xpol.get_mean(rhis_tta['VR'],name='VR')
 		xpol.plot(rhi_tta_mean, ax=ax[0], name='VR',smode='rhi', colorbar=False, case=case, 
@@ -161,11 +162,12 @@ for case in range(9,10):
 	fig.suptitle(title, fontsize=14)
 	plt.subplots_adjust(hspace=0.05, wspace=0.05, left=0.05, right=0.97)
 
-	# o='c{}_xpol_tta_average_{}_{}.pdf'
-	# saveas=o.format(str(case).zfill(2), 'rhi', str(azimuth).zfill(3))
-	# xpolpdf = PdfPages(saveas)
-	# xpolpdf.savefig()
-	# xpolpdf.close()
+	if closeall:
+		o='c{}_xpol_tta_average_{}_{}.pdf'
+		saveas=o.format(str(case).zfill(2), 'rhi', str(azimuth).zfill(3))
+		xpolpdf = PdfPages(saveas)
+		xpolpdf.savefig()
+		xpolpdf.close()
 
 	if closeall:
 		plt.close('all')

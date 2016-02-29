@@ -36,8 +36,8 @@ for case in range(8,9):
 	ppis=xpol.get_data(case,'PPI',elevation,homedir=homedir)
 
 	tta_idxs=np.asarray([],dtype=int)
-	for time in tta_times:
-		idx=np.where((ppis.index.day == time.day) & (ppis.index.hour == time.hour))[0]
+	for tta in tta_times:
+		idx=np.where((ppis.index.day == tta.day) & (ppis.index.hour == tta.hour))[0]
 		if idx.size>0:
 			tta_idxs=np.append(tta_idxs,idx)
 	notta_idxs=np.delete(np.arange(len(ppis.index)), tta_idxs)
