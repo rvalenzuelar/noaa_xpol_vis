@@ -194,7 +194,7 @@ def plot_mean(means, dates, name, smode, elev=None, title=None, colorbar=True):
                      colorbar=colorbar)
             ax.set_xlabel('Distance from radar [km]')
             ax.set_ylabel('Altitude AGL [km]')
-        print dates[n]
+        print(dates[n])
         xpolmean.savefig()
         plt.close('all')
     xpolmean.close()
@@ -210,7 +210,7 @@ def plot_single(xpol_dataframe, name=None, smode=None,
     ntimes = single.shape[0]
     title = 'C' + str(case).zfill(2) + ' ' + \
         xpol_dataframe.index.name + ' ' + name
-    print title
+    print(title)
     if 'time_az2' in xpol_dataframe:
         second_dates = xpol_dataframe['time_az2']
     else:
@@ -268,8 +268,8 @@ def plot_single(xpol_dataframe, name=None, smode=None,
             ax.set_ylabel('Altitude AGL [km]')
             plt.subplots_adjust(left=0.08, right=0.95, bottom=0.12)
 
-        print 'Plotting ' + smode + ' ' + \
-            dates[n].strftime('%Y-%b-%d %H:%M:%S')
+        o = 'Plotting {} {}'
+        print(o.format(smode, dates[n].strftime('%Y-%b-%d %H:%M:%S')))
 
         xpolsingle.savefig()
         plt.close('all')
@@ -448,7 +448,7 @@ def get_mean(arrays, minutes=None, name=None, good_thres=1000):
         return mean, good
 
 
-def get_dbz_freq(arrays, thres=20):
+def get_dbz_freq(arrays, thres=None):
 
     narrays = arrays.shape[0]
     first = True
@@ -471,6 +471,8 @@ def get_dbz_freq(arrays, thres=20):
 
 def get_dbz_threshold(arrays):
 
+    import matplotlib.mlab as mlab
+
     narrays = arrays.shape[0]
     first = True
     for n in range(0, narrays):
@@ -480,6 +482,22 @@ def get_dbz_threshold(arrays):
             first = False
         else:
             A = np.dstack((A, a))
+
+    mu = np.nanmean(A)
+    sigma = np.nanstd(A)
+
+    fig, ax = plt.subplots()
+    hist, bins, _ = ax.hist(A.flatten(), normed=1, bins=range(-10, 60, 5))
+    x = range(-10, 60)
+    y = mlab.normpdf(x, mu, sigma)
+    plt.plot(x, y, 'r--', linewidth=2)
+    ax.text(range(-10, 60))
+    plt.show(block=False)
+
+    print(hist)
+    print(bins)
+    print(mu)
+    print(sigma)
 
 
 def get_dbz_precip_accum(arrays):
@@ -685,7 +703,7 @@ def cart2geo(cartLine, orientation, radarLoc):
             else:
                 az = 180
         gd = Geodesic.WGS84.Direct(radarLoc[0], radarLoc[
-                                   1], az,  np.abs(p) * 1000.)
+            1], az,  np.abs(p) * 1000.)
         if orientation == 'WE':
             out.append(gd['lon2'])
         else:

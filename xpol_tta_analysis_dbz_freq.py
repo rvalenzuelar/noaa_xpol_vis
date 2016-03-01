@@ -7,7 +7,6 @@ import seaborn as sns
 import os
 from matplotlib.backends.backend_pdf import PdfPages
 
-reload(xpol)
 
 sns.reset_orig()
 
@@ -28,10 +27,8 @@ homedir = '/localdata/'
 for case in range(8, 9):
 
     elevation, azimuth, dbz_thres, maxv = setcase[case]
-    foo = homedir+'WINDPROF'
-    print foo
-    tta_times = wp.get_tta_times(case=str(case),homedir=foo)
-    print tta_times
+    tta_times = wp.get_tta_times(case=str(case), homedir=homedir)
+    print(tta_times)
 
     ' PPIs'
     '**********************************************************************'
@@ -52,7 +49,7 @@ for case in range(8, 9):
     ppis_tta = ppis.iloc[tta_idxs]
 
     if ppis_tta.size > 0:
-        print 'TTA'
+        print('TTA')
 
         dbz_freq = xpol.get_dbz_freq(ppis_tta['ZA'], thres=dbz_thres)
         xpol.plot(dbz_freq, ax=ax[2], name='freq', smode='ppi',
@@ -78,7 +75,7 @@ for case in range(8, 9):
     ppis_notta = ppis.iloc[notta_idxs]
 
     if ppis_notta.size > 0:
-        print 'NO TTA'
+        print('NO TTA')
 
         dbz_freq = xpol.get_dbz_freq(ppis_notta['ZA'], thres=dbz_thres)
         xpol.plot(dbz_freq, ax=ax[3], name='freq', smode='ppi',
