@@ -31,11 +31,11 @@ def plot(array, ax=None, show=True, name=None, smode=None,
     if extent is None:
         if smode == 'rhi':
             if case in [11, 13, 14]:
-                extent = [-30, 30, 0.05, 11]
+                extent = [-30, 30, 0.05, 10]
             elif case == 12:
-                extent = [-30, 20, 0.05, 11]
+                extent = [-22, 30, 0.05, 10]
             else:
-                extent = [-40, 20, 0.05, 11]
+                extent = [-40, 20, 0.05, 10]
         elif smode == 'ppi':
             extent = [-58, 45, -58, 33]
 
@@ -85,8 +85,11 @@ def plot(array, ax=None, show=True, name=None, smode=None,
     if smode == 'ppi':
         add_rings(ax, space_km=10, color='k')
         add_azimuths(ax, space_deg=30)
-        add_ring(ax, radius=57.8, color=(0.85, 0.85, 0.85), lw=10)
-        add_circle(ax, radius=60, color=(0.85, 0.85, 0.85))
+        add_ring(ax, radius=57.8,
+                 color=(0.85, 0.85, 0.85),
+                 lw=10)  # masking outer ring
+        add_background_circle(ax,
+                              radius=60, color=(0.85, 0.85, 0.85))
         if add_azline:
             x = np.arange(-40, 40)
             if add_azline in [0, 180]:
@@ -103,8 +106,13 @@ def plot(array, ax=None, show=True, name=None, smode=None,
         ax.set_yticks([])
         ax.grid(False)
         # ax.set_axis_bgcolor((0.5,0.5,0.5))
+        if textbox:
+            props = dict(facecolor='white')
+            plt.text(0.05, 0.05, textbox, transform=ax.transAxes,
+                     bbox=props)
     elif smode == 'rhi':
         # ax.set_xlim([-40, 20])
+        ax.set_xlim([extent[0], extent[1]+2])
         ax.set_ylim([0, 11])
         yticks = np.arange(0.5, 11.5, 1.0)
         ax.set_yticks(yticks)
@@ -115,7 +123,10 @@ def plot(array, ax=None, show=True, name=None, smode=None,
         else:
             ax.set_yticklabels([''])
         ax.grid(True)
-
+        if textbox:
+            props = dict(facecolor='white')
+            plt.text(0.73, 0.05, textbox, transform=ax.transAxes,
+                     bbox=props)
     plt.draw()
 
     if date:
@@ -126,12 +137,8 @@ def plot(array, ax=None, show=True, name=None, smode=None,
         plt.text(0.4, 1.01, title, ha='left', transform=ax.transAxes)
     if colorbar:
         add_colorbar(ax, im, cbar_ticks)
-    if textbox:
-        props = dict(facecolor='white')
-        plt.text(0.6, 0.9, textbox, transform=ax.transAxes, bbox=props)
 
-    # if show:
-        # plt.show(block=False)
+    return ax
 
 
 def plotm(array, ax=None, show=True, name=None):
@@ -386,9 +393,12 @@ def parse_rawdate(start_date=None, start_time=None, datestring=None):
 
 
 def get_mean(arrays, minutes=None, name=None, good_thres=1000):
+    '''
+    good_thres is the minimum # of pixels (gates, cells) that
+    a sweep needs to have to be considered good
+    '''
 
     if minutes:
-
         g = pd.TimeGrouper(str(minutes) + 'T')
         G = arrays.groupby(g)
 
@@ -421,40 +431,41 @@ def get_mean(arrays, minutes=None, name=None, good_thres=1000):
     else:
 
         narrays = arrays.shape[0]
-        good = 0
+        good_array = np.array([])
         for n in range(0, narrays):
             if n == 0:
-                a = arrays.iloc[[n]].values[0]  # first value
+                A = arrays.iloc[[n]].values[0]  # first value
                 # number of non-nan points
-                valid = a.size - np.sum(np.isnan(a))
-                if valid > good_thres:
-                    good += 1
+                valid = A.size - np.sum(np.isnan(A))
+                # good_array = np.append(good_array, valid)
             else:
-                rr = arrays.iloc[[n]].values[0]
-                # number of non-nan points
-                valid = rr.size - np.sum(np.isnan(rr))
-                if valid > good_thres:
-                    good += 1
-                a = np.dstack((a, rr))
+                a = arrays.iloc[[n]].values[0]
+                valid = a.size - np.sum(np.isnan(a))
+                # good_array = np.append(good_array, valid)
+                A = np.dstack((A, a))
+            good_array = np.append(good_array, valid)
 
         if name == 'ZA':
-            a = toLinear(a)
+            A = toLinear(A)
 
-        mean = np.nanmean(a, axis=2)
+        mean = np.nanmean(A, axis=2)
 
         if name == 'ZA':
             mean = toLog10(mean)
 
-        return mean, good
+        return mean, good_array
 
 
 def get_dbz_freq(arrays, thres=None):
 
     narrays = arrays.shape[0]
+    mu, sigma = dbz_hist(arrays)
+    thres = mu - sigma
     first = True
     for n in range(0, narrays):
+        print('processing array # {}'.format(n))
         a = arrays.iloc[[n]].values[0]
-        cond = (a >= thres) + 0  # convert to Int boolean
+        cond = (a >= thres) + 0  # 0 converts False->0 and True->1
         if first:
             COND = np.zeros(a.shape)
             COND = np.dstack((COND, cond))
@@ -462,14 +473,54 @@ def get_dbz_freq(arrays, thres=None):
         else:
             COND = np.dstack((COND, cond))
 
-    freq = (np.sum(COND, axis=2) / narrays) * 100.
     mean, _ = get_mean(arrays, name='ZA')
+    method = 2
+    if method == 1:
+        csum = np.sum(COND, axis=2)
+        freq = (csum / narrays) * 100.
+    elif method == 2:
+        csum = filter_sum(np.sum(COND, axis=2))
+        freq = (csum / np.nanmax(csum)) * 100.
+
+    ''' removes missing obs '''
     freq[np.isnan(mean)] = np.nan
 
-    return freq
+    return freq, thres, csum
+    # return csum, thres, mean
 
 
-def get_dbz_threshold(arrays):
+def get_dbz_freq_large(arrays, thres=None):
+    ''' made for large number of arrays
+    when combining all case studies
+    '''
+    narrays = arrays.shape[0]
+    mu, sigma = dbz_hist(arrays)
+    thres = mu - sigma
+    first = True
+    a = arrays.iloc[[0]].values[0]
+    COND = np.zeros(a.shape)
+    for n in range(0, narrays):
+        print('processing array # {}'.format(n))
+        a = arrays.iloc[[n]].values[0]
+        cond = (a >= thres) + 0.  # 0 converts False->0 and True->1
+        COND = np.dstack((COND, cond))
+
+    method = 2
+    if method == 1:
+        csum = np.sum(COND, axis=2)
+        freq = (csum / narrays) * 100.
+    elif method == 2:
+        csum = filter_sum(np.sum(COND, axis=2))
+        freq = (csum / np.nanmax(csum)) * 100.
+
+    ''' removes missing obs '''
+    freq[freq == 0] = np.nan
+
+    return freq, thres, csum
+    # return csum, thres, mean
+
+
+def dbz_hist(arrays, ax=None, plot=False):
 
     import matplotlib.mlab as mlab
 
@@ -483,21 +534,118 @@ def get_dbz_threshold(arrays):
         else:
             A = np.dstack((A, a))
 
+    # hist, bins = np.histogram(A, bins=range(-20, 80))
+    # return hist,bins,A
+
     mu = np.nanmean(A)
     sigma = np.nanstd(A)
 
-    fig, ax = plt.subplots()
-    hist, bins, _ = ax.hist(A.flatten(), normed=1, bins=range(-10, 60, 5))
-    x = range(-10, 60)
-    y = mlab.normpdf(x, mu, sigma)
-    plt.plot(x, y, 'r--', linewidth=2)
-    ax.text(range(-10, 60))
+    if plot:
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        hist, bins, _ = ax.hist(A.flatten(), normed=1,
+                                bins=range(-10, 60, 5), histtype='step')
+        x = range(-20, 60)
+        y = mlab.normpdf(x, mu, sigma)
+        plt.plot(x, y, 'r-', linewidth=2)
+        ax.text(0.6, 0.85, r'$\mu={:3.1f}$'.format(mu),
+                transform=ax.transAxes, weight='bold')
+        ax.text(0.6, 0.75, r'$\sigma={:3.1f}$'.format(sigma),
+                transform=ax.transAxes, weight='bold')
+        ax.set_yticklabels('')
+        plt.show(block=False)
+
+    return mu, sigma
+
+
+def make_hist(inarray, ax=None, hist_type=None):
+
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    if hist_type == 'count':
+        top = int(np.nanmax(inarray))
+        bins = range(1, top, 1)
+        xticks = None
+        yticks = None
+        # text = False
+    elif hist_type == 'vr':
+        top = int(np.ceil(np.max(inarray)/1000.)*1000.)
+        bins = range(0, top+1000, 1000)
+        if top == 5000:
+            xticks = range(0, 5000, 1000)
+        else:
+            xticks = bins[::4]
+        xtlab = [int(i/1000.) for i in xticks]
+        yticks = True
+        # text = True
+
+    hist, bins, _ = ax.hist(inarray.flatten(),
+                            bins=bins, histtype='step')
+
+    if xticks is not None:
+        ax.set_xticks(xticks)
+        ax.set_xticklabels(xtlab)
+    # if text:
+        # ax.text(0.5, 0.9, ' <1000:{:3.0f}'.format(np.sum(hist[0])),
+        #         transform=ax.transAxes)
+        # ax.text(0.5, 0.8, '>=1000:{:3.0f}'.format(np.sum(hist[1:])),
+        # transform=ax.transAxes)
+
+    if yticks is not None:
+        pass
+    else:
+        ax.set_yticks([])
+
     plt.show(block=False)
 
-    print(hist)
-    print(bins)
-    print(mu)
-    print(sigma)
+
+def filter_sum(array_sum, dbz_mean=None):
+    '''
+    Removes artifacts in sum due to
+    artifacts in reflectivity
+    '''
+    topv = int(np.ceil(np.nanmax(array_sum)/10.)*10.)
+    if topv == 30:
+        delr = 1
+    else:
+        delr = 10
+    hist, bins = np.histogram(array_sum,
+                              bins=range(0, topv, delr))
+    count_thres = 30
+    idx = np.where(hist < count_thres)[0]
+    if (dbz_mean is None) and (idx.size > 0):
+        target_count = bins[idx[0]]
+        array_sum[array_sum >= target_count] = np.nan
+    elif (idx.size > 0):
+        target_count = bins[idx[0]]
+        cond1 = (array_sum >= target_count)
+        mean = np.nanmean(dbz_mean)
+        std = np.nanstd(dbz_mean)
+        botc = mean - std
+        topc = mean + std
+        cond2 = (dbz_mean <= botc)
+        cond3 = (dbz_mean >= topc)
+        array_sum[cond1 & (cond2 | cond3)] = np.nan
+
+        # target_count = bins[idx[0]]
+        # cond1 = (array_sum >= target_count)
+        # mean = np.nanmean(dbz_mean)
+        # std = np.nanstd(dbz_mean)
+        # coef = 0.5
+        # nsum = 999
+        # while nsum > 0:
+        #     print(nsum)
+        #     botc = mean - coef*std
+        #     topc = mean + coef*std
+        #     cond2 = (dbz_mean <= botc) | (dbz_mean >= topc)
+        #     array_sum[cond1 & cond2] = np.nan
+        #     hist, bins = np.histogram(array_sum, bins=range(0, topv))
+        #     nsum = np.sum(hist[hist < count_thres])
+        #     coef += 0.5
+
+    return array_sum
 
 
 def get_dbz_precip_accum(arrays):
@@ -586,9 +734,6 @@ def get_max(arrays):
 
 def add_rings(ax, space_km=10, color='k', mapping=False):
 
-    from shapely.geometry import Polygon
-    from descartes import PolygonPatch
-
     # textdirection=225
     textdirection = -5
 
@@ -603,6 +748,9 @@ def add_rings(ax, space_km=10, color='k', mapping=False):
 
 
 def add_ring(ax=None, radius=None, mapping=False, color=None, lw=1):
+
+    from shapely.geometry import Polygon
+    from descartes import PolygonPatch
 
     if mapping:
         m = mapping[0]
@@ -622,7 +770,7 @@ def add_ring(ax=None, radius=None, mapping=False, color=None, lw=1):
     return circ
 
 
-def add_circle(ax=None, radius=None, color=None):
+def add_background_circle(ax=None, radius=None, color=None):
 
     circ = plt.Circle((0, 0), radius, fill=True, color=color, zorder=0)
     ax.add_patch(circ)
@@ -634,6 +782,38 @@ def add_azimuths(ax, space_deg=30):
     yaz = ax.get_ylim()
     ax.plot(xaz, [0, 0], color='k')
     ax.plot([0, 0], yaz, color='k')
+
+
+def add_zisodop_arrow(ax=None, vr_array=None):
+    '''
+    source:
+    http://stackoverflow.com/questions/7878398/
+    how-to-extract-an-arbitrary-line-of-values-from-a-numpy-array
+
+    Not implemented. Need to resolve how coord systems are
+    interpreted in map_coordinate
+    '''
+    from scipy.ndimage import map_coordinates
+
+    vr_array[np.isnan(vr_array)] = 0.
+    vr_array_geo = np.flipud(vr_array.T)
+    x0, y0 = [207, 183]
+    x1, y1 = [0, 0]
+    num = 100
+    y, x = np.linspace(x1, x0, num), np.linspace(y1, y0, num)
+    z = map_coordinates(vr_array_geo, np.vstack((x, y)))
+
+    ff, aa = plt.subplots()
+    aa.plot(z)
+    plt.show(block=False)
+
+    ff, aa = plt.subplots()
+    im = aa.imshow(np.flipud(vr_array), interpolation='none')
+    plt.colorbar(im)
+    aa.plot([x0, x1], [y0, y1], color='b')
+    aa.plot(x0, y0, 'go')
+    aa.plot(x1, y1, 'ro')
+    plt.show(block=False)
 
 
 def add_colorbar(ax, im, cbar_ticks):
