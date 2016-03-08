@@ -460,7 +460,8 @@ def get_dbz_freq(arrays, thres=None):
 
     narrays = arrays.shape[0]
     mu, sigma = dbz_hist(arrays)
-    thres = mu - sigma
+    # thres = mu - sigma
+    thres = mu
     first = True
     for n in range(0, narrays):
         print('processing array # {}'.format(n))

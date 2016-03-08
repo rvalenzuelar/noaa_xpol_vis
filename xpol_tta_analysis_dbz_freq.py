@@ -2,13 +2,13 @@ import Windprof2 as wp
 import xpol
 import numpy as np
 import matplotlib.pyplot as plt
-# import seaborn as sns
+import seaborn as sns
+import os
 from matplotlib.backends.backend_pdf import PdfPages
 from subplot_axes import add_subplot_axes
 
 
-# sns.reset_orig()
-
+sns.reset_orig()
 
 setcase = {8: [0.5, 180, 10, 100],
            9: [0.5, 180, 13, 100],
@@ -20,114 +20,114 @@ setcase = {8: [0.5, 180, 10, 100],
 
 closeall = True
 
-# homedir = os.path.expanduser('~')
-homedir = '/localdata/'
+homedir = os.path.expanduser('~')
+# homedir = '/localdata/'
 
 for case in range(8, 15):
 
-    elevation, azimuth, dbz_thres, maxv = setcase[case]
+    elevation, azimuth, _, maxv = setcase[case]
     tta_times = wp.get_tta_times(case=str(case), homedir=homedir)
     print(tta_times)
 
     ' PPIs'
     '**********************************************************************'
-    # ppis = xpol.get_data(case, 'PPI', elevation, homedir=homedir)
+    ppis = xpol.get_data(case, 'PPI', elevation, homedir=homedir)
 
-    # tta_idxs = np.asarray([], dtype=int)
-    # for time in tta_times:
-    #     idx = np.where((ppis.index.day == time.day) &
-    #                    (ppis.index.hour == time.hour))[0]
-    #     if idx.size > 0:
-    #         tta_idxs = np.append(tta_idxs, idx)
-    # notta_idxs = np.delete(np.arange(len(ppis.index)), tta_idxs)
+    tta_idxs = np.asarray([], dtype=int)
+    for time in tta_times:
+        idx = np.where((ppis.index.day == time.day) &
+                       (ppis.index.hour == time.hour))[0]
+        if idx.size > 0:
+            tta_idxs = np.append(tta_idxs, idx)
+    notta_idxs = np.delete(np.arange(len(ppis.index)), tta_idxs)
 
-    # fig, axes = plt.subplots(2, 2, figsize=(
-    #     11, 10.5), sharex=True, sharey=True)
-    # ax = axes.flatten()
+    fig, axes = plt.subplots(2, 2, figsize=(
+        11, 10.5), sharex=True, sharey=True)
+    ax = axes.flatten()
 
-    # ppis_tta = ppis.iloc[tta_idxs]
+    ppis_tta = ppis.iloc[tta_idxs]
 
-    # if ppis_tta.size > 0:
+    if ppis_tta.size > 0:
 
-    #     print('TTA')
-    #     dbz_freq, thres, csum = xpol.get_dbz_freq(ppis_tta['ZA'])
-    #     xpol.plot(dbz_freq, ax=ax[2], name='freq', smode='ppi',
-    #               colorbar=False, case=case, vmax=maxv,
-    #               textbox='dBZ Threshold:{:2.1f}'.format(thres))
-    #     rect = [0.6, -0.1, 0.4, 0.4]
-    #     subax = add_subplot_axes(ax[2], rect)
-    #     xpol.dbz_hist(ppis_tta['ZA'], ax=subax, plot=True)
+        print('TTA')
+        dbz_freq, thres, csum = xpol.get_dbz_freq(ppis_tta['ZA'])
+        xpol.plot(dbz_freq, ax=ax[2], name='freq', smode='ppi',
+                  colorbar=False, case=case, vmax=maxv,
+                  textbox='dBZ Threshold:{:2.1f}'.format(thres))
+        rect = [0.6, -0.1, 0.4, 0.4]
+        subax = add_subplot_axes(ax[2], rect)
+        xpol.dbz_hist(ppis_tta['ZA'], ax=subax, plot=True)
 
-    #     rect = [0.6, 0.59, 0.4, 0.4]
-    #     subax = add_subplot_axes(ax[2], rect)
-    #     xpol.make_hist(csum, ax=subax, hist_type='count')
+        rect = [0.6, 0.59, 0.4, 0.4]
+        subax = add_subplot_axes(ax[2], rect)
+        xpol.make_hist(csum, ax=subax, hist_type='count')
 
-    #     ppi_tta_mean, good = xpol.get_mean(ppis_tta['VR'], name='VR')
-    #     xpol.plot(ppi_tta_mean, ax=ax[0], name='VR',
-    #               smode='ppi', colorbar=False, case=case)
+        ppi_tta_mean, good = xpol.get_mean(ppis_tta['VR'], name='VR')
+        xpol.plot(ppi_tta_mean, ax=ax[0], name='VR',
+                  smode='ppi', colorbar=False, case=case)
 
-    #     rect = [0.6, 0.59, 0.4, 0.4]
-    #     subax = add_subplot_axes(ax[0], rect)
-    #     xpol.make_hist(good, ax=subax, hist_type='vr')
+        rect = [0.6, 0.59, 0.4, 0.4]
+        subax = add_subplot_axes(ax[0], rect)
+        xpol.make_hist(good, ax=subax, hist_type='vr')
 
-    #     n = ' (n={})'.format(ppis_tta.index.size)
-    # else:
-    #     ax[0].set_xticks([])
-    #     ax[0].set_yticks([])
-    #     ax[0].text(0.5, 0.5, 'NO DATA', transform=ax[
-    #                0].transAxes, ha='center', weight='bold')
-    #     ax[2].text(0.5, 0.5, 'NO DATA', transform=ax[
-    #                2].transAxes, ha='center', weight='bold')
-    #     n = ''
+        n = ' (n={})'.format(ppis_tta.index.size)
+    else:
+        ax[0].set_xticks([])
+        ax[0].set_yticks([])
+        ax[0].text(0.5, 0.5, 'NO DATA', transform=ax[
+                   0].transAxes, ha='center', weight='bold')
+        ax[2].text(0.5, 0.5, 'NO DATA', transform=ax[
+                   2].transAxes, ha='center', weight='bold')
+        n = ''
 
-    # ax[0].set_title('TTA ' + n)
+    ax[0].set_title('TTA ' + n)
 
-    # ppis_notta = ppis.iloc[notta_idxs]
+    ppis_notta = ppis.iloc[notta_idxs]
 
-    # if ppis_notta.size > 0:
-    #     print('NO TTA')
+    if ppis_notta.size > 0:
+        print('NO TTA')
 
-    #     dbz_freq, thres, csum = xpol.get_dbz_freq(ppis_notta['ZA'])
-    #     xpol.plot(dbz_freq, ax=ax[3], name='freq', smode='ppi',
-    #               colorbar=True, case=case, vmax=maxv,
-    #               textbox='dBZ Threshold:{:2.1f}'.format(thres))
-    #     rect = [0.7, -0.1, 0.4, 0.4]
-    #     subax1 = add_subplot_axes(ax[3], rect)
-    #     xpol.dbz_hist(ppis_notta['ZA'], ax=subax1, plot=True)
+        dbz_freq, thres, csum = xpol.get_dbz_freq(ppis_notta['ZA'])
+        xpol.plot(dbz_freq, ax=ax[3], name='freq', smode='ppi',
+                  colorbar=True, case=case, vmax=maxv,
+                  textbox='dBZ Threshold:{:2.1f}'.format(thres))
+        rect = [0.7, -0.1, 0.4, 0.4]
+        subax1 = add_subplot_axes(ax[3], rect)
+        xpol.dbz_hist(ppis_notta['ZA'], ax=subax1, plot=True)
 
-    #     rect = [0.7, 0.59, 0.4, 0.4]
-    #     subax2 = add_subplot_axes(ax[3], rect)
-    #     xpol.make_hist(csum, ax=subax2, hist_type='count')
+        rect = [0.7, 0.59, 0.4, 0.4]
+        subax2 = add_subplot_axes(ax[3], rect)
+        xpol.make_hist(csum, ax=subax2, hist_type='count')
 
-    #     ppi_notta_mean, good = xpol.get_mean(ppis_notta['VR'], name='VR')
-    #     xpol.plot(ppi_notta_mean, ax=ax[1],  name='VR',
-    #               smode='ppi', colorbar=True, case=case)
+        ppi_notta_mean, good = xpol.get_mean(ppis_notta['VR'], name='VR')
+        xpol.plot(ppi_notta_mean, ax=ax[1],  name='VR',
+                  smode='ppi', colorbar=True, case=case)
 
-    #     rect = [0.7, 0.59, 0.4, 0.4]
-    #     subax = add_subplot_axes(ax[1], rect)
-    #     xpol.make_hist(good, ax=subax, hist_type='vr')
+        rect = [0.7, 0.59, 0.4, 0.4]
+        subax = add_subplot_axes(ax[1], rect)
+        xpol.make_hist(good, ax=subax, hist_type='vr')
 
-    #     n = ' (n={})'.format(ppis_notta.index.size)
+        n = ' (n={})'.format(ppis_notta.index.size)
 
-    # ax[1].set_title('NO-TTA' + n)
+    ax[1].set_title('NO-TTA' + n)
 
-    # t = 'XPOL Time Average - C{} {} - {} - Nscan={}\nBeg: {} - End: {} (UTC)'
-    # ym = ppis.index[0].strftime('%Y-%b')
-    # beg = ppis.index[0].strftime('%d %H:%M')
-    # end = ppis.index[-1].strftime('%d %H:%M')
-    # title = t.format(str(case).zfill(2), ym, ppis.index.name,
-    #                  ppis.index.size, beg, end)
-    # fig.suptitle(title, fontsize=14)
-    # plt.subplots_adjust(hspace=0.05, wspace=0.1,
-    #                     left=0.05, right=0.95, bottom=0.05)
+    t = 'XPOL Time Average - C{} {} - {} - Nscan={}\nBeg: {} - End: {} (UTC)'
+    ym = ppis.index[0].strftime('%Y-%b')
+    beg = ppis.index[0].strftime('%d %H:%M')
+    end = ppis.index[-1].strftime('%d %H:%M')
+    title = t.format(str(case).zfill(2), ym, ppis.index.name,
+                     ppis.index.size, beg, end)
+    fig.suptitle(title, fontsize=14)
+    plt.subplots_adjust(hspace=0.05, wspace=0.1,
+                        left=0.05, right=0.95, bottom=0.05)
 
-    # if closeall:
-    #     o = 'c{}_xpol_tta_average_{}_{}.pdf'
-    #     saveas = o.format(str(case).zfill(2), 'ppi',
-    #                       str(elevation * 10).zfill(3))
-    #     xpolpdf = PdfPages(saveas)
-    #     xpolpdf.savefig()
-    #     xpolpdf.close()
+    if closeall:
+        o = 'c{}_xpol_tta_average_{}_{}.pdf'
+        saveas = o.format(str(case).zfill(2), 'ppi',
+                          str(elevation * 10).zfill(3))
+        xpolpdf = PdfPages(saveas)
+        xpolpdf.savefig()
+        xpolpdf.close()
 
     ' RHIs'
     '*************************************************************************'
@@ -202,7 +202,7 @@ for case in range(8, 15):
         rect = [-0.15, 0.62, 0.35, 0.35]
         subax = add_subplot_axes(ax[0], rect)
         xpol.make_hist(good, ax=subax, hist_type='vr')
-        
+
         n = ' (n={})'.format(rhis_tta.index.size)
         ax[0].set_title('TTA ' + n)
 
