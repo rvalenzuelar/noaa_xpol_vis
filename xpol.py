@@ -15,7 +15,8 @@ from netCDF4 import Dataset
 from glob import glob
 from datetime import datetime
 from matplotlib.backends.backend_pdf import PdfPages
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+# from mpl_toolkits.axes_grid1 import make_axes_locatable
+from rv_utilities import add_colorbar
 
 from mpl_toolkits.basemap import Basemap
 
@@ -815,14 +816,6 @@ def add_zisodop_arrow(ax=None, vr_array=None):
     aa.plot(x0, y0, 'go')
     aa.plot(x1, y1, 'ro')
     plt.show(block=False)
-
-
-def add_colorbar(ax, im, cbar_ticks):
-
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="2%", pad=0.05)
-    cbar = plt.colorbar(im, cax=cax, ticks=cbar_ticks)
-    return cbar
 
 
 def custom_cmap(cmap_set=None):
