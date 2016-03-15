@@ -18,12 +18,12 @@ setcase = {8: [0.5, 180, 10, 100],
            13: [0.5, 180, 25, 100],
            14: [0.5, 180, 30, 100]}
 
-closeall = True
+closeall = False
 
 homedir = os.path.expanduser('~')
 # homedir = '/localdata/'
 
-for case in range(8, 15):
+for case in range(12, 13):
 
     elevation, azimuth, _, maxv = setcase[case]
     tta_times = wp.get_tta_times(case=str(case), homedir=homedir)

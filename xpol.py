@@ -458,22 +458,22 @@ def get_mean(arrays, minutes=None, name=None, good_thres=1000):
 
 
 def get_dbz_freq(arrays, thres=None):
-
+    from rv_utilities import pandas2stack
     narrays = arrays.shape[0]
-    mu, sigma = dbz_hist(arrays)
+    # mu, sigma = dbz_hist(arrays)
     # thres = mu - sigma
-    thres = mu
-    first = True
+    # thres = mu
+    X = pandas2stack(arrays)
+    Z = X[~np.isnan(X)].flatten()
+    thres = np.percentile(Z, 50)
+    # first = True
+    a = arrays.iloc[[0]].values[0]
+    COND = np.zeros(a.shape)
     for n in range(0, narrays):
         print('processing array # {}'.format(n))
         a = arrays.iloc[[n]].values[0]
         cond = (a >= thres) + 0  # 0 converts False->0 and True->1
-        if first:
-            COND = np.zeros(a.shape)
-            COND = np.dstack((COND, cond))
-            first = False
-        else:
-            COND = np.dstack((COND, cond))
+        COND = np.dstack((COND, cond))
 
     mean, _ = get_mean(arrays, name='ZA')
     method = 2
@@ -485,7 +485,8 @@ def get_dbz_freq(arrays, thres=None):
         freq = (csum / np.nanmax(csum)) * 100.
 
     ''' removes missing obs '''
-    freq[np.isnan(mean)] = np.nan
+    # freq[np.isnan(mean)] = np.nan
+    freq[freq == 0] = np.nan
 
     return freq, thres, csum
     # return csum, thres, mean
@@ -495,13 +496,16 @@ def get_dbz_freq_large(arrays, thres=None):
     ''' made for large number of arrays
     when combining all case studies
     '''
+    from rv_utilities import pandas2stack
     narrays = arrays.shape[0]
-    mu, sigma = dbz_hist(arrays)
-    thres = mu - sigma
-    first = True
+    # mu, sigma = dbz_hist(arrays)
+    # thres = mu - sigma
+    X = pandas2stack(arrays)
+    Z = X[~np.isnan(X)].flatten()
+    thres = np.percentile(Z, 50)
     a = arrays.iloc[[0]].values[0]
     COND = np.zeros(a.shape)
-    for n in range(0, narrays):
+    for n in range(narrays):
         print('processing array # {}'.format(n))
         a = arrays.iloc[[n]].values[0]
         cond = (a >= thres) + 0.  # 0 converts False->0 and True->1
@@ -525,20 +529,9 @@ def get_dbz_freq_large(arrays, thres=None):
 def dbz_hist(arrays, ax=None, plot=False):
 
     import matplotlib.mlab as mlab
+    from rv_utilities import pandas2stack
 
-    narrays = arrays.shape[0]
-    first = True
-    for n in range(0, narrays):
-        a = arrays.iloc[[n]].values[0]
-        if first:
-            A = a.copy()
-            first = False
-        else:
-            A = np.dstack((A, a))
-
-    # hist, bins = np.histogram(A, bins=range(-20, 80))
-    # return hist,bins,A
-
+    A = pandas2stack(arrays)
     mu = np.nanmean(A)
     sigma = np.nanstd(A)
 
