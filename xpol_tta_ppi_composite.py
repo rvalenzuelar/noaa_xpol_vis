@@ -3,7 +3,7 @@ import xpol
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from subplot_axes import add_subplot_axes
+import os
 
 setcase = {8: [0.5, 180],
            9: [0.5, 180],
@@ -12,7 +12,9 @@ setcase = {8: [0.5, 180],
            12: [0.5,   6],
            13: [0.5, 180],
            14: [0.5, 180]}
-homedir = '/localdata/'
+# homedir = '/localdata/'
+homedir = os.path.expanduser('~')
+
 tta_dframes_za = []
 tta_dframes_vr = []
 notta_dframes_za = []
@@ -51,15 +53,19 @@ tta_frame_vr = pd.concat(tta_dframes_vr)
 notta_frame_za = pd.concat(notta_dframes_za)
 notta_frame_vr = pd.concat(notta_dframes_vr)
 
-tta_dbz_freq, tta_thres, _ = xpol.get_dbz_freq_large(tta_frame_za)
-notta_dbz_freq, notta_thres, _ = xpol.get_dbz_freq_large(notta_frame_za)
+# tta_dbz_freq, tta_thres, _ = xpol.get_dbz_freq_large(tta_frame_za)
+# notta_dbz_freq, notta_thres, _ = xpol.get_dbz_freq_large(notta_frame_za)
+
+tta_dbz_freq, tta_thres, _ = xpol.get_dbz_freq(tta_frame_za,
+                                               percentile=50)
+notta_dbz_freq, notta_thres, _ = xpol.get_dbz_freq(notta_frame_za,
+                                                   percentile=50)
 
 tta_vr_mean, _ = xpol.get_mean(tta_frame_vr, name='VR')
 notta_vr_mean, _ = xpol.get_mean(notta_frame_vr, name='VR')
 
 ''' PPIs
 ---------------------'''
-
 fig, axes = plt.subplots(2, 2, figsize=(
     11, 10.5), sharex=True, sharey=True)
 ax = axes.flatten()
@@ -68,7 +74,6 @@ xpol.plot(tta_vr_mean, ax=ax[0], name='VR',
           smode='ppi', colorbar=False)
 n = 'TTA # of sweeps = {}'.format(len(tta_frame_vr))
 ax[0].set_title(n)
-
 
 xpol.plot(notta_vr_mean, ax=ax[1], name='VR',
           smode='ppi', colorbar=True)

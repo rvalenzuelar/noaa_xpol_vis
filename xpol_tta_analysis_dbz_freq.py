@@ -18,12 +18,12 @@ setcase = {8: [0.5, 180, 10, 100],
            13: [0.5, 180, 25, 100],
            14: [0.5, 180, 30, 100]}
 
-closeall = False
+closeall = True
 
 homedir = os.path.expanduser('~')
 # homedir = '/localdata/'
 
-for case in range(12, 13):
+for case in range(8, 15):
 
     elevation, azimuth, _, maxv = setcase[case]
     tta_times = wp.get_tta_times(case=str(case), homedir=homedir)
@@ -50,13 +50,14 @@ for case in range(12, 13):
     if ppis_tta.size > 0:
 
         print('TTA')
-        dbz_freq, thres, csum = xpol.get_dbz_freq(ppis_tta['ZA'])
+        dbz_freq, thres, csum = xpol.get_dbz_freq(ppis_tta['ZA'],
+                                                  percentile=50)
         xpol.plot(dbz_freq, ax=ax[2], name='freq', smode='ppi',
                   colorbar=False, case=case, vmax=maxv,
                   textbox='dBZ Threshold:{:2.1f}'.format(thres))
-        rect = [0.6, -0.1, 0.4, 0.4]
-        subax = add_subplot_axes(ax[2], rect)
-        xpol.dbz_hist(ppis_tta['ZA'], ax=subax, plot=True)
+        # rect = [0.6, -0.1, 0.4, 0.4]
+        # subax = add_subplot_axes(ax[2], rect)
+        # xpol.dbz_hist(ppis_tta['ZA'], ax=subax, plot=True)
 
         rect = [0.6, 0.59, 0.4, 0.4]
         subax = add_subplot_axes(ax[2], rect)
@@ -87,13 +88,14 @@ for case in range(12, 13):
     if ppis_notta.size > 0:
         print('NO TTA')
 
-        dbz_freq, thres, csum = xpol.get_dbz_freq(ppis_notta['ZA'])
+        dbz_freq, thres, csum = xpol.get_dbz_freq(ppis_notta['ZA'],
+                                                  percentile=50)
         xpol.plot(dbz_freq, ax=ax[3], name='freq', smode='ppi',
                   colorbar=True, case=case, vmax=maxv,
                   textbox='dBZ Threshold:{:2.1f}'.format(thres))
-        rect = [0.7, -0.1, 0.4, 0.4]
-        subax1 = add_subplot_axes(ax[3], rect)
-        xpol.dbz_hist(ppis_notta['ZA'], ax=subax1, plot=True)
+        # rect = [0.7, -0.1, 0.4, 0.4]
+        # subax1 = add_subplot_axes(ax[3], rect)
+        # xpol.dbz_hist(ppis_notta['ZA'], ax=subax1, plot=True)
 
         rect = [0.7, 0.59, 0.4, 0.4]
         subax2 = add_subplot_axes(ax[3], rect)
@@ -131,7 +133,6 @@ for case in range(12, 13):
 
     ' RHIs'
     '*************************************************************************'
-
     rhis = xpol.get_data(case, 'RHI', azimuth, homedir=homedir)
     elev = xpol.get_max(rhis['EL'])
 
@@ -150,14 +151,15 @@ for case in range(12, 13):
     if rhis_notta.size > 0:
         print('NO TTA')
 
-        dbz_freq, thres, csum = xpol.get_dbz_freq(rhis_notta['ZA'])
+        dbz_freq, thres, csum = xpol.get_dbz_freq(rhis_notta['ZA'],
+                                                  percentile=50)
         xpol.plot(dbz_freq, ax=ax[3], name='freq', smode='rhi',
                   colorbar=True, case=case, vmax=maxv,
                   textbox='dBZ Threshold:{:2.1f}'.format(thres))
 
-        rect = [0.8, 0.7, 0.35, 0.35]
-        subax = add_subplot_axes(ax[3], rect)
-        xpol.dbz_hist(rhis_notta['ZA'], ax=subax, plot=True)
+        # rect = [0.8, 0.7, 0.35, 0.35]
+        # subax = add_subplot_axes(ax[3], rect)
+        # xpol.dbz_hist(rhis_notta['ZA'], ax=subax, plot=True)
 
         rect = [0.0, 0.7, 0.35, 0.35]
         subax = add_subplot_axes(ax[3], rect)
@@ -181,14 +183,15 @@ for case in range(12, 13):
     if rhis_tta.size > 0:
         print('TTA')
 
-        dbz_freq, thres, csum = xpol.get_dbz_freq(rhis_tta['ZA'])
+        dbz_freq, thres, csum = xpol.get_dbz_freq(rhis_tta['ZA'],
+                                                  percentile=50)
         xpol.plot(dbz_freq, ax=ax[2], name='freq', smode='rhi',
                   colorbar=False, case=case, vmax=maxv,
                   textbox='dBZ Threshold:{:2.1f}'.format(thres))
 
-        rect = [0.7, 0.7, 0.35, 0.35]
-        subax = add_subplot_axes(ax[2], rect)
-        xpol.dbz_hist(rhis_tta['ZA'], ax=subax, plot=True)
+        # rect = [0.7, 0.7, 0.35, 0.35]
+        # subax = add_subplot_axes(ax[2], rect)
+        # xpol.dbz_hist(rhis_tta['ZA'], ax=subax, plot=True)
 
         rect = [-0.15, 0.7, 0.35, 0.35]
         subax = add_subplot_axes(ax[2], rect)

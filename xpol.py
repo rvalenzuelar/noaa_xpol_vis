@@ -284,7 +284,7 @@ def plot_single(xpol_dataframe, name=None, smode=None,
     xpolsingle.close()
 
 
-def get_data(case, scanmode, angle, homedir=None):
+def get_data(case, scanmode, angle, homedir=None, index=None):
 
     if scanmode == 'PPI':
         basestr = homedir + '/XPOL/netcdf/c{0}/PPI/elev{1}/'
@@ -295,6 +295,8 @@ def get_data(case, scanmode, angle, homedir=None):
     basedir = basestr.format(str(case).zfill(2), str(int(angle)).zfill(3))
     cdf_files = glob(basedir + '*.cdf')
     cdf_files.sort()
+    if index is not None:
+        cdf_files = [cdf_files[index]]
 
     za_arrays = []  # attenuation corrected dBZ
     vr_arrays = []  # radial velocity
@@ -325,6 +327,8 @@ def get_data(case, scanmode, angle, homedir=None):
             basedir = basestr.format(str(case).zfill(2), '360')
             cdf_files2 = glob(basedir + '*.cdf')
             cdf_files2.sort()
+            if index is not None:
+                cdf_files2 = [cdf_files2[index]]
             data2 = Dataset(cdf_files2[n])
             VR2 = np.squeeze(data2.variables['VR'][0, :, 1, :]) / scale
             ZA2 = np.squeeze(data2.variables['ZA'][0, :, 1, :]) / scale
@@ -457,66 +461,38 @@ def get_mean(arrays, minutes=None, name=None, good_thres=1000):
         return mean, good_array
 
 
-def get_dbz_freq(arrays, thres=None):
+def get_dbz_freq(arrays, percentile=None):
     from rv_utilities import pandas2stack
     narrays = arrays.shape[0]
-    # mu, sigma = dbz_hist(arrays)
-    # thres = mu - sigma
-    # thres = mu
     X = pandas2stack(arrays)
     Z = X[~np.isnan(X)].flatten()
-    thres = np.percentile(Z, 50)
-    # first = True
-    a = arrays.iloc[[0]].values[0]
-    COND = np.zeros(a.shape)
-    for n in range(0, narrays):
-        print('processing array # {}'.format(n))
-        a = arrays.iloc[[n]].values[0]
-        cond = (a >= thres) + 0  # 0 converts False->0 and True->1
-        COND = np.dstack((COND, cond))
-
-    mean, _ = get_mean(arrays, name='ZA')
-    method = 2
-    if method == 1:
-        csum = np.sum(COND, axis=2)
-        freq = (csum / narrays) * 100.
-    elif method == 2:
-        csum = filter_sum(np.sum(COND, axis=2))
-        freq = (csum / np.nanmax(csum)) * 100.
-
-    ''' removes missing obs '''
-    # freq[np.isnan(mean)] = np.nan
-    freq[freq == 0] = np.nan
-
-    return freq, thres, csum
-    # return csum, thres, mean
-
-
-def get_dbz_freq_large(arrays, thres=None):
-    ''' made for large number of arrays
-    when combining all case studies
-    '''
-    from rv_utilities import pandas2stack
-    narrays = arrays.shape[0]
-    # mu, sigma = dbz_hist(arrays)
-    # thres = mu - sigma
-    X = pandas2stack(arrays)
-    Z = X[~np.isnan(X)].flatten()
-    thres = np.percentile(Z, 50)
+    thres = np.percentile(Z, percentile)
     a = arrays.iloc[[0]].values[0]
     COND = np.zeros(a.shape)
     for n in range(narrays):
         print('processing array # {}'.format(n))
         a = arrays.iloc[[n]].values[0]
-        cond = (a >= thres) + 0.  # 0 converts False->0 and True->1
+        mask = make_mask(a)
+        a[mask] = np.nan  # removes artifacts along edge
+        cond = (a >= thres).astype(int)
         COND = np.dstack((COND, cond))
 
+    mean, _ = get_mean(arrays, name='ZA')
     method = 2
     if method == 1:
-        csum = np.sum(COND, axis=2)
+        csum = np.sum(COND, axis=2),
         freq = (csum / narrays) * 100.
     elif method == 2:
-        csum = filter_sum(np.sum(COND, axis=2))
+        csum = np.sum(COND, axis=2)
+
+        ''' remove isolated grid points  '''
+        summax = int(np.nanmax(csum))
+        hist, bins = np.histogram(csum, bins=range(summax+2))
+        idx = np.where(hist == 1)[0]
+        if idx.size > 0:
+            for i in idx:
+                csum[csum == i] = np.nan
+
         freq = (csum / np.nanmax(csum)) * 100.
 
     ''' removes missing obs '''
@@ -524,6 +500,67 @@ def get_dbz_freq_large(arrays, thres=None):
 
     return freq, thres, csum
     # return csum, thres, mean
+
+
+def make_mask(array):
+    ''' creates mask of border to eliminate artifacts'''
+    mask = np.zeros(array.shape)
+    mina = 245
+    maxa = 310
+    filter_circle1 = [polar2cart(116, z, center=(116, 116))
+                      for z in range(mina, maxa)]
+    filter_circle2 = [polar2cart(115, z, center=(116, 116))
+                      for z in range(mina, maxa)]
+    filter_circle3 = [polar2cart(114, z, center=(116, 116))
+                      for z in range(mina, maxa)]
+    filter_circle4 = [polar2cart(113, z, center=(116, 116))
+                      for z in range(mina, maxa)]
+
+    for f in filter_circle4:
+        try:
+            mask[f] = 1
+        except IndexError:
+            pass
+    for f in filter_circle3:
+        try:
+            mask[f] = 1
+        except IndexError:
+            pass
+    for f in filter_circle2:
+        try:
+            mask[f] = 1
+        except IndexError:
+            pass
+    for f in filter_circle1:
+        try:
+            mask[f] = 1
+        except IndexError:
+            pass
+
+    for c in range(mask.shape[1]):
+        col = mask[:, c]
+
+        idx = np.where(col)[0]
+        try:
+            col[idx+1] = True
+        except IndexError:
+            col[idx[:-2]+1] = True
+
+        idx = np.where(col)[0]
+        try:
+            col[idx+1] = True
+        except IndexError:
+            col[idx[:-2]+1] = True
+
+        mask[:, c] = col
+
+    return mask.astype(bool)
+
+
+def polar2cart(ro, phi, center=(0, 0)):
+    x = int(ro*np.cos(np.radians(phi))+center[0])
+    y = int(ro*np.sin(np.radians(phi))+center[1])
+    return(x, y)
 
 
 def dbz_hist(arrays, ax=None, plot=False):
@@ -601,31 +638,32 @@ def filter_sum(array_sum, dbz_mean=None):
     Removes artifacts in sum due to
     artifacts in reflectivity
     '''
-    topv = int(np.ceil(np.nanmax(array_sum)/10.)*10.)
+    arraysum = array_sum.copy()
+    topv = int(np.ceil(np.nanmax(arraysum)/10.)*10.)
     if topv == 30:
         delr = 1
     else:
-        delr = 10
-    hist, bins = np.histogram(array_sum,
+        delr = 5
+    hist, bins = np.histogram(arraysum,
                               bins=range(0, topv, delr))
-    count_thres = 30
+    count_thres = 5
     idx = np.where(hist < count_thres)[0]
     if (dbz_mean is None) and (idx.size > 0):
         target_count = bins[idx[0]]
-        array_sum[array_sum >= target_count] = np.nan
+        arraysum[arraysum >= target_count] = np.nan
     elif (idx.size > 0):
         target_count = bins[idx[0]]
-        cond1 = (array_sum >= target_count)
+        cond1 = (arraysum >= target_count)
         mean = np.nanmean(dbz_mean)
         std = np.nanstd(dbz_mean)
         botc = mean - std
         topc = mean + std
         cond2 = (dbz_mean <= botc)
         cond3 = (dbz_mean >= topc)
-        array_sum[cond1 & (cond2 | cond3)] = np.nan
+        arraysum[cond1 & (cond2 | cond3)] = np.nan
 
         # target_count = bins[idx[0]]
-        # cond1 = (array_sum >= target_count)
+        # cond1 = (arraysum >= target_count)
         # mean = np.nanmean(dbz_mean)
         # std = np.nanstd(dbz_mean)
         # coef = 0.5
@@ -635,12 +673,12 @@ def filter_sum(array_sum, dbz_mean=None):
         #     botc = mean - coef*std
         #     topc = mean + coef*std
         #     cond2 = (dbz_mean <= botc) | (dbz_mean >= topc)
-        #     array_sum[cond1 & cond2] = np.nan
-        #     hist, bins = np.histogram(array_sum, bins=range(0, topv))
+        #     arraysum[cond1 & cond2] = np.nan
+        #     hist, bins = np.histogram(arraysum, bins=range(0, topv))
         #     nsum = np.sum(hist[hist < count_thres])
         #     coef += 0.5
 
-    return array_sum
+    return arraysum
 
 
 def get_dbz_precip_accum(arrays):
