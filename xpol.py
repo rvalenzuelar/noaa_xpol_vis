@@ -45,9 +45,14 @@ def plot(array, ax=None, show=True, name=None, smode=None,
         cmap = 'jet'
         cbar_ticks = range(vmin, vmax + 5, 5)
     elif name == 'VR':
-        vmin, vmax = [-20, 20]
-        cmap = custom_cmap('ppi_vr1')
-        cbar_ticks = range(vmin, vmax + 5, 5)
+        if smode == 'ppi':
+            vmin, vmax = [-20, 20]
+            cmap = custom_cmap('ppi_vr1')
+            cbar_ticks = range(vmin, vmax + 5, 5)
+        else:
+            vmin, vmax = [0, 40]
+            cmap = custom_cmap('rhi_vr1')
+            cbar_ticks = range(vmin, vmax + 10, 10)
     elif name == 'count':
         vmin, vmax = [0, 180]
         cmap = 'viridis'
@@ -69,13 +74,10 @@ def plot(array, ax=None, show=True, name=None, smode=None,
         cmap = 'viridis_r'
         cbar_ticks = np.arange(0, vmax + 10, 10)
 
-    if elev is not None and name == 'VR':
-        array = array / np.cos(np.radians(elev))
-        idx = np.where((elev >= 65) & (elev <= 115))
-        array[idx] = np.nan
-        vmin, vmax = [0, 40]
-        cmap = custom_cmap('rhi_vr1')
-        cbar_ticks = range(vmin, vmax + 10, 10)
+    # if elev is not None and name == 'VR':
+    #     array = array / np.cos(np.radians(elev))
+    #     idx = np.where((elev >= 65) & (elev <= 115))
+    #     array[idx] = np.nan
 
     im = ax.imshow(array, interpolation='none', origin='lower',
                    vmin=vmin, vmax=vmax,
@@ -315,12 +317,11 @@ def get_data(case, scanmode, angle, homedir=None, index=None):
             VR = np.squeeze(data.variables['VR'][0, :, 1, :]) / scale
             ZA = np.squeeze(data.variables['ZA'][0, :, 1, :]) / scale
             EL = np.squeeze(data.variables['EL'][0, :, 1, :]) / scale
-            ' invert sign to represent northward wind from southward azimuths'
-            if case == 12:
-                if angle == 147:
-                    VR = VR * -1
-            else:
-                VR = VR * -1
+            # ' invert sign to represent northward wind from southward azimuths'
+            # if case == 12 and angle == 147:
+            #     VR = VR * -1
+            # else:
+            # VR = VR * -1
 
         ' add second complemental azimuth in RHI '
         if case in [11, 13, 14] and scanmode == 'RHI':
@@ -352,7 +353,13 @@ def get_data(case, scanmode, angle, homedir=None, index=None):
         VR[VR == -32768.0] = np.nan
         ZA[ZA == -32768.0] = np.nan
 
-        vr_arrays.append(VR)
+        ''' compute wind component and remove
+        center cone in radial velocity '''
+        VR = VR / np.cos(np.radians(EL))
+        idx = np.where((EL >= 65) & (EL <= 115))
+        VR[idx] = np.nan
+
+        vr_arrays.append(np.abs(VR))
         za_arrays.append(ZA)
         el_arrays.append(EL)
 
@@ -370,17 +377,16 @@ def get_data(case, scanmode, angle, homedir=None, index=None):
     df['EL'] = el_arrays
 
     if scanmode == 'PPI':
-        df.index.name = scanmode + ' ' + str(angle / 10.)
+        name = '{0} {1}'
+        df.index.name = name.format(scanmode, str(angle / 10.))
     else:
+        name = '{0} {1}-{2}'
         if angle <= 180 and angle > 90:
-            df.index.name = scanmode + ' ' + \
-                str(angle) + '-' + str(angle + 180)
+            df.index.name = name.format(scanmode, str(angle), str(angle + 180))
         elif angle <= 90 and angle > 0:
-            df.index.name = scanmode + ' ' + \
-                str(angle + 180) + '-' + str(angle)
+            df.index.name = name.format(scanmode, str(angle + 180), str(angle))
         else:
-            df.index.name = scanmode + ' ' + \
-                str(angle) + '-' + str(angle - 180)
+            df.index.name = name.format(scanmode, str(angle), str(angle - 180))
 
     if len(time_index2) > 0:
         df['time_az2'] = time_index2
@@ -402,7 +408,6 @@ def get_mean(arrays, minutes=None, name=None, good_thres=1000):
     good_thres is the minimum # of pixels (gates, cells) that
     a sweep needs to have to be considered good
     '''
-
     if minutes:
         g = pd.TimeGrouper(str(minutes) + 'T')
         G = arrays.groupby(g)
@@ -433,8 +438,8 @@ def get_mean(arrays, minutes=None, name=None, good_thres=1000):
             dates.append(gx[0])
 
             return dates, np.array(mean)
-    else:
 
+    else:
         narrays = arrays.shape[0]
         good_array = np.array([])
         for n in range(0, narrays):
@@ -470,7 +475,7 @@ def get_dbz_freq(arrays, percentile=None):
     a = arrays.iloc[[0]].values[0]
     COND = np.zeros(a.shape)
     for n in range(narrays):
-        print('processing array # {}'.format(n))
+        # print('processing array # {}'.format(n))
         a = arrays.iloc[[n]].values[0]
         mask = make_mask(a)
         a[mask] = np.nan  # removes artifacts along edge
@@ -500,6 +505,30 @@ def get_dbz_freq(arrays, percentile=None):
 
     return freq, thres, csum
     # return csum, thres, mean
+
+
+def convert_to_common_grid(pandas_array):
+    ''' convert pandas rhis df with different
+    grid dimensions to a common grid to be
+    statistically processed '''
+
+    newdf = pandas_array.copy()
+    for n, a in enumerate(pandas_array):
+        if a.shape == (61, 429):
+            midp = 286
+        elif a.shape == (61, 430):
+            midp = 215
+        elif a.shape == (61, 372):
+            midp = 157
+        offset = 290-midp
+        size = a.shape[1]
+        end = size+offset
+        common = np.empty((61, 505))
+        common[:] = np.nan
+        common[:, offset:end] = a
+        newdf.iloc[n] = common
+
+    return newdf
 
 
 def make_mask(array):
