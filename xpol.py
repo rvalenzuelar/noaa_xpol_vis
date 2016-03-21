@@ -22,7 +22,7 @@ from mpl_toolkits.basemap import Basemap
 
 
 def plot(array, ax=None, show=True, name=None, smode=None,
-         date=None, elev=None, title=None, add_azline=None,
+         date=None, title=None, add_azline=None,
          colorbar=True, extent=None, second_date=None, case=None,
          add_yticklabs=False, vmax=None, textbox=None):
 
@@ -31,12 +31,7 @@ def plot(array, ax=None, show=True, name=None, smode=None,
 
     if extent is None:
         if smode == 'rhi':
-            if case in [11, 13, 14]:
-                extent = [-30, 30, 0.05, 10]
-            elif case == 12:
-                extent = [-22, 30, 0.05, 10]
-            else:
-                extent = [-40, 20, 0.05, 10]
+            extent = [-40, 30, 0.05, 10]
         elif smode == 'ppi':
             extent = [-58, 45, -58, 33]
 
@@ -74,11 +69,6 @@ def plot(array, ax=None, show=True, name=None, smode=None,
         cmap = 'viridis_r'
         cbar_ticks = np.arange(0, vmax + 10, 10)
 
-    # if elev is not None and name == 'VR':
-    #     array = array / np.cos(np.radians(elev))
-    #     idx = np.where((elev >= 65) & (elev <= 115))
-    #     array[idx] = np.nan
-
     im = ax.imshow(array, interpolation='none', origin='lower',
                    vmin=vmin, vmax=vmax,
                    cmap=cmap,
@@ -115,7 +105,8 @@ def plot(array, ax=None, show=True, name=None, smode=None,
                      bbox=props)
     elif smode == 'rhi':
         # ax.set_xlim([-40, 20])
-        ax.set_xlim([extent[0], extent[1]+2])
+        # ax.set_xlim([extent[0], extent[1]+2])
+        ax.set_xlim([extent[0], extent[1]])
         ax.set_ylim([0, 11])
         yticks = np.arange(0.5, 11.5, 1.0)
         ax.set_yticks(yticks)
