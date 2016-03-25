@@ -308,11 +308,6 @@ def get_data(case, scanmode, angle, homedir=None, index=None):
             VR = np.squeeze(data.variables['VR'][0, :, 1, :]) / scale
             ZA = np.squeeze(data.variables['ZA'][0, :, 1, :]) / scale
             EL = np.squeeze(data.variables['EL'][0, :, 1, :]) / scale
-            # ' invert sign to represent northward wind from southward azimuths'
-            # if case == 12 and angle == 147:
-            #     VR = VR * -1
-            # else:
-            # VR = VR * -1
 
         ' add second complemental azimuth in RHI '
         if case in [11, 13, 14] and scanmode == 'RHI':
@@ -344,13 +339,20 @@ def get_data(case, scanmode, angle, homedir=None, index=None):
         VR[VR == -32768.0] = np.nan
         ZA[ZA == -32768.0] = np.nan
 
-        ''' compute wind component and remove
-        center cone in radial velocity '''
-        VR = VR / np.cos(np.radians(EL))
-        idx = np.where((EL >= 65) & (EL <= 115))
-        VR[idx] = np.nan
+        if scanmode == 'RHI':
+            ''' compute wind component and remove
+            center cone in radial velocity '''
+            VR = VR / np.cos(np.radians(EL))
+            idx = np.where((EL >= 65) & (EL <= 115))
+            VR[idx] = np.nan
+            ''' abs value represent southerly wind in 180-360
+            RHIs '''
+            VR = np.abs(VR)
+            if case == 12:
+                ''' c12 uses 186-6 azim RHIs so compute meridional'''
+                VR = VR/np.cos(np.radians(6))
 
-        vr_arrays.append(np.abs(VR))
+        vr_arrays.append(VR)
         za_arrays.append(ZA)
         el_arrays.append(EL)
 
