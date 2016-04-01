@@ -21,7 +21,8 @@ notta_dframes_za = []
 notta_dframes_vr = []
 
 print('Creating list of dataframes...')
-for case in range(8, 15):
+# for case in range(8, 15):
+for case in [8, 9, 10, 11, 13, 14]:
 
     tta_times = wp.get_tta_times(case=str(case), homedir=homedir)
 
