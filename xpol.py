@@ -500,28 +500,42 @@ def get_dbz_freq(arrays, percentile=None):
     # return csum, thres, mean
 
 
-def convert_to_common_grid(pandas_array):
+def convert_to_common_grid(input_array):
     ''' convert pandas rhis df with different
     grid dimensions to a common grid to be
     statistically processed '''
 
-    newdf = pandas_array.copy()
-    for n, a in enumerate(pandas_array):
-        if a.shape == (61, 429):
+    if type(input_array) == pd.core.frame.DataFrame:
+        newdf = input_array.copy()
+        for n, a in enumerate(input_array):
+            if a.shape == (61, 429):
+                midp = 286
+            elif a.shape == (61, 430):
+                midp = 215
+            elif a.shape == (61, 372):
+                midp = 157
+            offset = 290-midp
+            size = a.shape[1]
+            end = size+offset
+            common = np.empty((61, 505))
+            common[:] = np.nan
+            common[:, offset:end] = a
+            newdf.iloc[n] = common
+        return newdf
+    else:
+        if input_array.shape == (61, 429):
             midp = 286
-        elif a.shape == (61, 430):
+        elif input_array.shape == (61, 430):
             midp = 215
-        elif a.shape == (61, 372):
+        elif input_array.shape == (61, 372):
             midp = 157
         offset = 290-midp
-        size = a.shape[1]
+        size = input_array.shape[1]
         end = size+offset
         common = np.empty((61, 505))
         common[:] = np.nan
-        common[:, offset:end] = a
-        newdf.iloc[n] = common
-
-    return newdf
+        common[:, offset:end] = input_array
+        return common
 
 
 def make_mask(array):
