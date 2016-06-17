@@ -2,13 +2,13 @@ import Windprof2 as wp
 import xpol
 import numpy as np
 import matplotlib.pyplot as plt
-# import seaborn as sns
+import seaborn as sns
+import os
 from matplotlib.backends.backend_pdf import PdfPages
 from subplot_axes import add_subplot_axes
 
 
-# sns.reset_orig()
-
+sns.reset_orig()
 
 setcase = {8: [0.5, 180, 10, 100],
            9: [0.5, 180, 13, 100],
@@ -20,12 +20,12 @@ setcase = {8: [0.5, 180, 10, 100],
 
 closeall = True
 
-# homedir = os.path.expanduser('~')
-homedir = '/localdata/'
+homedir = os.path.expanduser('~')
+# homedir = '/localdata/'
 
 for case in range(8, 15):
 
-    elevation, azimuth, dbz_thres, maxv = setcase[case]
+    elevation, azimuth, _, maxv = setcase[case]
     tta_times = wp.get_tta_times(case=str(case), homedir=homedir)
     print(tta_times)
 
@@ -50,13 +50,14 @@ for case in range(8, 15):
     # if ppis_tta.size > 0:
 
     #     print('TTA')
-    #     dbz_freq, thres, csum = xpol.get_dbz_freq(ppis_tta['ZA'])
+    #     dbz_freq, thres, csum = xpol.get_dbz_freq(ppis_tta['ZA'],
+    #                                               percentile=50)
     #     xpol.plot(dbz_freq, ax=ax[2], name='freq', smode='ppi',
     #               colorbar=False, case=case, vmax=maxv,
     #               textbox='dBZ Threshold:{:2.1f}'.format(thres))
-    #     rect = [0.6, -0.1, 0.4, 0.4]
-    #     subax = add_subplot_axes(ax[2], rect)
-    #     xpol.dbz_hist(ppis_tta['ZA'], ax=subax, plot=True)
+    #     # rect = [0.6, -0.1, 0.4, 0.4]
+    #     # subax = add_subplot_axes(ax[2], rect)
+    #     # xpol.dbz_hist(ppis_tta['ZA'], ax=subax, plot=True)
 
     #     rect = [0.6, 0.59, 0.4, 0.4]
     #     subax = add_subplot_axes(ax[2], rect)
@@ -87,13 +88,14 @@ for case in range(8, 15):
     # if ppis_notta.size > 0:
     #     print('NO TTA')
 
-    #     dbz_freq, thres, csum = xpol.get_dbz_freq(ppis_notta['ZA'])
+    #     dbz_freq, thres, csum = xpol.get_dbz_freq(ppis_notta['ZA'],
+    #                                               percentile=50)
     #     xpol.plot(dbz_freq, ax=ax[3], name='freq', smode='ppi',
     #               colorbar=True, case=case, vmax=maxv,
     #               textbox='dBZ Threshold:{:2.1f}'.format(thres))
-    #     rect = [0.7, -0.1, 0.4, 0.4]
-    #     subax1 = add_subplot_axes(ax[3], rect)
-    #     xpol.dbz_hist(ppis_notta['ZA'], ax=subax1, plot=True)
+    #     # rect = [0.7, -0.1, 0.4, 0.4]
+    #     # subax1 = add_subplot_axes(ax[3], rect)
+    #     # xpol.dbz_hist(ppis_notta['ZA'], ax=subax1, plot=True)
 
     #     rect = [0.7, 0.59, 0.4, 0.4]
     #     subax2 = add_subplot_axes(ax[3], rect)
@@ -131,7 +133,6 @@ for case in range(8, 15):
 
     ' RHIs'
     '*************************************************************************'
-
     rhis = xpol.get_data(case, 'RHI', azimuth, homedir=homedir)
     elev = xpol.get_max(rhis['EL'])
 
@@ -149,23 +150,25 @@ for case in range(8, 15):
     rhis_notta = rhis.iloc[notta_idxs]
     if rhis_notta.size > 0:
         print('NO TTA')
-
-        dbz_freq, thres, csum = xpol.get_dbz_freq(rhis_notta['ZA'])
+        za = xpol.convert_to_common_grid(rhis_notta['ZA'])
+        dbz_freq, thres, csum = xpol.get_dbz_freq(za,
+                                                  percentile=50)
         xpol.plot(dbz_freq, ax=ax[3], name='freq', smode='rhi',
                   colorbar=True, case=case, vmax=maxv,
                   textbox='dBZ Threshold:{:2.1f}'.format(thres))
 
-        rect = [0.8, 0.7, 0.35, 0.35]
-        subax = add_subplot_axes(ax[3], rect)
-        xpol.dbz_hist(rhis_notta['ZA'], ax=subax, plot=True)
+        # rect = [0.8, 0.7, 0.35, 0.35]
+        # subax = add_subplot_axes(ax[3], rect)
+        # xpol.dbz_hist(rhis_notta['ZA'], ax=subax, plot=True)
 
         rect = [0.0, 0.7, 0.35, 0.35]
         subax = add_subplot_axes(ax[3], rect)
         xpol.make_hist(csum, ax=subax, hist_type='count')
 
-        rhi_notta_mean, good = xpol.get_mean(rhis_notta['VR'], name='VR')
+        vr = xpol.convert_to_common_grid(rhis_notta['VR'])
+        rhi_notta_mean, good = xpol.get_mean(vr, name='VR')
         xpol.plot(rhi_notta_mean, ax=ax[1],  name='VR', smode='rhi',
-                  colorbar=True, case=case, elev=elev)
+                  colorbar=True, case=case)
 
         rect = [0.0, 0.62, 0.35, 0.35]
         subax = add_subplot_axes(ax[1], rect)
@@ -180,29 +183,30 @@ for case in range(8, 15):
     rhis_tta = rhis.iloc[tta_idxs]
     if rhis_tta.size > 0:
         print('TTA')
-
-        dbz_freq, thres, csum = xpol.get_dbz_freq(rhis_tta['ZA'])
+        za = xpol.convert_to_common_grid(rhis_tta['ZA'])
+        dbz_freq, thres, csum = xpol.get_dbz_freq(za,
+                                                  percentile=50)
         xpol.plot(dbz_freq, ax=ax[2], name='freq', smode='rhi',
                   colorbar=False, case=case, vmax=maxv,
                   textbox='dBZ Threshold:{:2.1f}'.format(thres))
 
-        rect = [0.7, 0.7, 0.35, 0.35]
-        subax = add_subplot_axes(ax[2], rect)
-        xpol.dbz_hist(rhis_tta['ZA'], ax=subax, plot=True)
+        # rect = [0.7, 0.7, 0.35, 0.35]
+        # subax = add_subplot_axes(ax[2], rect)
+        # xpol.dbz_hist(rhis_tta['ZA'], ax=subax, plot=True)
 
         rect = [-0.15, 0.7, 0.35, 0.35]
         subax = add_subplot_axes(ax[2], rect)
         xpol.make_hist(csum, ax=subax, hist_type='count')
 
-        rhi_tta_mean, good = xpol.get_mean(rhis_tta['VR'], name='VR')
+        vr = xpol.convert_to_common_grid(rhis_tta['VR'])
+        rhi_tta_mean, good = xpol.get_mean(vr, name='VR')
         xpol.plot(rhi_tta_mean, ax=ax[0], name='VR', smode='rhi',
-                  colorbar=False, case=case,
-                  elev=elev, add_yticklabs=True)
+                  colorbar=False, case=case, add_yticklabs=True)
 
         rect = [-0.15, 0.62, 0.35, 0.35]
         subax = add_subplot_axes(ax[0], rect)
         xpol.make_hist(good, ax=subax, hist_type='vr')
-        
+
         n = ' (n={})'.format(rhis_tta.index.size)
         ax[0].set_title('TTA ' + n)
 

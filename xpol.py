@@ -15,13 +15,14 @@ from netCDF4 import Dataset
 from glob import glob
 from datetime import datetime
 from matplotlib.backends.backend_pdf import PdfPages
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+# from mpl_toolkits.axes_grid1 import make_axes_locatable
+from rv_utilities import add_colorbar
 
 from mpl_toolkits.basemap import Basemap
 
 
 def plot(array, ax=None, show=True, name=None, smode=None,
-         date=None, elev=None, title=None, add_azline=None,
+         date=None, title=None, add_azline=None,
          colorbar=True, extent=None, second_date=None, case=None,
          add_yticklabs=False, vmax=None, textbox=None):
 
@@ -30,12 +31,7 @@ def plot(array, ax=None, show=True, name=None, smode=None,
 
     if extent is None:
         if smode == 'rhi':
-            if case in [11, 13, 14]:
-                extent = [-30, 30, 0.05, 10]
-            elif case == 12:
-                extent = [-22, 30, 0.05, 10]
-            else:
-                extent = [-40, 20, 0.05, 10]
+            extent = [-40, 30, 0.05, 10]
         elif smode == 'ppi':
             extent = [-58, 45, -58, 33]
 
@@ -44,9 +40,14 @@ def plot(array, ax=None, show=True, name=None, smode=None,
         cmap = 'jet'
         cbar_ticks = range(vmin, vmax + 5, 5)
     elif name == 'VR':
-        vmin, vmax = [-20, 20]
-        cmap = custom_cmap('ppi_vr1')
-        cbar_ticks = range(vmin, vmax + 5, 5)
+        if smode == 'ppi':
+            vmin, vmax = [-20, 20]
+            cmap = custom_cmap('ppi_vr1')
+            cbar_ticks = range(vmin, vmax + 5, 5)
+        else:
+            vmin, vmax = [0, 40]
+            cmap = custom_cmap('rhi_vr1')
+            cbar_ticks = range(vmin, vmax + 10, 10)
     elif name == 'count':
         vmin, vmax = [0, 180]
         cmap = 'viridis'
@@ -67,14 +68,6 @@ def plot(array, ax=None, show=True, name=None, smode=None,
         vmin = 0
         cmap = 'viridis_r'
         cbar_ticks = np.arange(0, vmax + 10, 10)
-
-    if elev is not None and name == 'VR':
-        array = array / np.cos(np.radians(elev))
-        idx = np.where((elev >= 65) & (elev <= 115))
-        array[idx] = np.nan
-        vmin, vmax = [0, 40]
-        cmap = custom_cmap('rhi_vr1')
-        cbar_ticks = range(vmin, vmax + 10, 10)
 
     im = ax.imshow(array, interpolation='none', origin='lower',
                    vmin=vmin, vmax=vmax,
@@ -112,7 +105,8 @@ def plot(array, ax=None, show=True, name=None, smode=None,
                      bbox=props)
     elif smode == 'rhi':
         # ax.set_xlim([-40, 20])
-        ax.set_xlim([extent[0], extent[1]+2])
+        # ax.set_xlim([extent[0], extent[1]+2])
+        ax.set_xlim([extent[0], extent[1]])
         ax.set_ylim([0, 11])
         yticks = np.arange(0.5, 11.5, 1.0)
         ax.set_yticks(yticks)
@@ -283,7 +277,7 @@ def plot_single(xpol_dataframe, name=None, smode=None,
     xpolsingle.close()
 
 
-def get_data(case, scanmode, angle, homedir=None):
+def get_data(case, scanmode, angle, homedir=None, index=None):
 
     if scanmode == 'PPI':
         basestr = homedir + '/XPOL/netcdf/c{0}/PPI/elev{1}/'
@@ -294,6 +288,8 @@ def get_data(case, scanmode, angle, homedir=None):
     basedir = basestr.format(str(case).zfill(2), str(int(angle)).zfill(3))
     cdf_files = glob(basedir + '*.cdf')
     cdf_files.sort()
+    if index is not None:
+        cdf_files = [cdf_files[index]]
 
     za_arrays = []  # attenuation corrected dBZ
     vr_arrays = []  # radial velocity
@@ -312,18 +308,14 @@ def get_data(case, scanmode, angle, homedir=None):
             VR = np.squeeze(data.variables['VR'][0, :, 1, :]) / scale
             ZA = np.squeeze(data.variables['ZA'][0, :, 1, :]) / scale
             EL = np.squeeze(data.variables['EL'][0, :, 1, :]) / scale
-            ' invert sign to represent northward wind from southward azimuths'
-            if case == 12:
-                if angle == 147:
-                    VR = VR * -1
-            else:
-                VR = VR * -1
 
         ' add second complemental azimuth in RHI '
         if case in [11, 13, 14] and scanmode == 'RHI':
             basedir = basestr.format(str(case).zfill(2), '360')
             cdf_files2 = glob(basedir + '*.cdf')
             cdf_files2.sort()
+            if index is not None:
+                cdf_files2 = [cdf_files2[index]]
             data2 = Dataset(cdf_files2[n])
             VR2 = np.squeeze(data2.variables['VR'][0, :, 1, :]) / scale
             ZA2 = np.squeeze(data2.variables['ZA'][0, :, 1, :]) / scale
@@ -347,6 +339,19 @@ def get_data(case, scanmode, angle, homedir=None):
         VR[VR == -32768.0] = np.nan
         ZA[ZA == -32768.0] = np.nan
 
+        if scanmode == 'RHI':
+            ''' compute wind component and remove
+            center cone in radial velocity '''
+            VR = VR / np.cos(np.radians(EL))
+            idx = np.where((EL >= 65) & (EL <= 115))
+            VR[idx] = np.nan
+            ''' abs value represent southerly wind in 180-360
+            RHIs '''
+            VR = np.abs(VR)
+            if case == 12:
+                ''' c12 uses 186-6 azim RHIs so compute meridional'''
+                VR = VR/np.cos(np.radians(6))
+
         vr_arrays.append(VR)
         za_arrays.append(ZA)
         el_arrays.append(EL)
@@ -365,17 +370,16 @@ def get_data(case, scanmode, angle, homedir=None):
     df['EL'] = el_arrays
 
     if scanmode == 'PPI':
-        df.index.name = scanmode + ' ' + str(angle / 10.)
+        name = '{0} {1}'
+        df.index.name = name.format(scanmode, str(angle / 10.))
     else:
+        name = '{0} {1}-{2}'
         if angle <= 180 and angle > 90:
-            df.index.name = scanmode + ' ' + \
-                str(angle) + '-' + str(angle + 180)
+            df.index.name = name.format(scanmode, str(angle), str(angle + 180))
         elif angle <= 90 and angle > 0:
-            df.index.name = scanmode + ' ' + \
-                str(angle + 180) + '-' + str(angle)
+            df.index.name = name.format(scanmode, str(angle + 180), str(angle))
         else:
-            df.index.name = scanmode + ' ' + \
-                str(angle) + '-' + str(angle - 180)
+            df.index.name = name.format(scanmode, str(angle), str(angle - 180))
 
     if len(time_index2) > 0:
         df['time_az2'] = time_index2
@@ -397,7 +401,6 @@ def get_mean(arrays, minutes=None, name=None, good_thres=1000):
     good_thres is the minimum # of pixels (gates, cells) that
     a sweep needs to have to be considered good
     '''
-
     if minutes:
         g = pd.TimeGrouper(str(minutes) + 'T')
         G = arrays.groupby(g)
@@ -428,8 +431,8 @@ def get_mean(arrays, minutes=None, name=None, good_thres=1000):
             dates.append(gx[0])
 
             return dates, np.array(mean)
-    else:
 
+    else:
         narrays = arrays.shape[0]
         good_array = np.array([])
         for n in range(0, narrays):
@@ -456,61 +459,38 @@ def get_mean(arrays, minutes=None, name=None, good_thres=1000):
         return mean, good_array
 
 
-def get_dbz_freq(arrays, thres=None):
-
+def get_dbz_freq(arrays, percentile=None):
+    from rv_utilities import pandas2stack
     narrays = arrays.shape[0]
-    mu, sigma = dbz_hist(arrays)
-    thres = mu - sigma
-    first = True
-    for n in range(0, narrays):
-        print('processing array # {}'.format(n))
+    X = pandas2stack(arrays)
+    Z = X[~np.isnan(X)].flatten()
+    thres = np.percentile(Z, percentile)
+    a = arrays.iloc[[0]].values[0]
+    COND = np.zeros(a.shape)
+    for n in range(narrays):
+        # print('processing array # {}'.format(n))
         a = arrays.iloc[[n]].values[0]
-        cond = (a >= thres) + 0  # 0 converts False->0 and True->1
-        if first:
-            COND = np.zeros(a.shape)
-            COND = np.dstack((COND, cond))
-            first = False
-        else:
-            COND = np.dstack((COND, cond))
+        mask = make_mask(a)
+        a[mask] = np.nan  # removes artifacts along edge
+        cond = (a >= thres).astype(int)
+        COND = np.dstack((COND, cond))
 
     mean, _ = get_mean(arrays, name='ZA')
     method = 2
     if method == 1:
-        csum = np.sum(COND, axis=2)
+        csum = np.sum(COND, axis=2),
         freq = (csum / narrays) * 100.
     elif method == 2:
-        csum = filter_sum(np.sum(COND, axis=2))
-        freq = (csum / np.nanmax(csum)) * 100.
-
-    ''' removes missing obs '''
-    freq[np.isnan(mean)] = np.nan
-
-    return freq, thres, csum
-    # return csum, thres, mean
-
-
-def get_dbz_freq_large(arrays, thres=None):
-    ''' made for large number of arrays
-    when combining all case studies
-    '''
-    narrays = arrays.shape[0]
-    mu, sigma = dbz_hist(arrays)
-    thres = mu - sigma
-    first = True
-    a = arrays.iloc[[0]].values[0]
-    COND = np.zeros(a.shape)
-    for n in range(0, narrays):
-        print('processing array # {}'.format(n))
-        a = arrays.iloc[[n]].values[0]
-        cond = (a >= thres) + 0.  # 0 converts False->0 and True->1
-        COND = np.dstack((COND, cond))
-
-    method = 2
-    if method == 1:
         csum = np.sum(COND, axis=2)
-        freq = (csum / narrays) * 100.
-    elif method == 2:
-        csum = filter_sum(np.sum(COND, axis=2))
+
+        ''' remove isolated grid points  '''
+        summax = int(np.nanmax(csum))
+        hist, bins = np.histogram(csum, bins=range(summax+2))
+        idx = np.where(hist == 1)[0]
+        if idx.size > 0:
+            for i in idx:
+                csum[csum == i] = np.nan
+
         freq = (csum / np.nanmax(csum)) * 100.
 
     ''' removes missing obs '''
@@ -520,23 +500,111 @@ def get_dbz_freq_large(arrays, thres=None):
     # return csum, thres, mean
 
 
+def convert_to_common_grid(input_array):
+    ''' convert pandas rhis df with different
+    grid dimensions to a common grid to be
+    statistically processed '''
+
+    if type(input_array) == pd.core.frame.DataFrame:
+        newdf = input_array.copy()
+        for n, a in enumerate(input_array):
+            if a.shape == (61, 429):
+                midp = 286
+            elif a.shape == (61, 430):
+                midp = 215
+            elif a.shape == (61, 372):
+                midp = 157
+            offset = 290-midp
+            size = a.shape[1]
+            end = size+offset
+            common = np.empty((61, 505))
+            common[:] = np.nan
+            common[:, offset:end] = a
+            newdf.iloc[n] = common
+        return newdf
+    else:
+        if input_array.shape == (61, 429):
+            midp = 286
+        elif input_array.shape == (61, 430):
+            midp = 215
+        elif input_array.shape == (61, 372):
+            midp = 157
+        offset = 290-midp
+        size = input_array.shape[1]
+        end = size+offset
+        common = np.empty((61, 505))
+        common[:] = np.nan
+        common[:, offset:end] = input_array
+        return common
+
+
+def make_mask(array):
+    ''' creates mask of border to eliminate artifacts'''
+    mask = np.zeros(array.shape)
+    mina = 245
+    maxa = 310
+    filter_circle1 = [polar2cart(116, z, center=(116, 116))
+                      for z in range(mina, maxa)]
+    filter_circle2 = [polar2cart(115, z, center=(116, 116))
+                      for z in range(mina, maxa)]
+    filter_circle3 = [polar2cart(114, z, center=(116, 116))
+                      for z in range(mina, maxa)]
+    filter_circle4 = [polar2cart(113, z, center=(116, 116))
+                      for z in range(mina, maxa)]
+
+    for f in filter_circle4:
+        try:
+            mask[f] = 1
+        except IndexError:
+            pass
+    for f in filter_circle3:
+        try:
+            mask[f] = 1
+        except IndexError:
+            pass
+    for f in filter_circle2:
+        try:
+            mask[f] = 1
+        except IndexError:
+            pass
+    for f in filter_circle1:
+        try:
+            mask[f] = 1
+        except IndexError:
+            pass
+
+    for c in range(mask.shape[1]):
+        col = mask[:, c]
+
+        idx = np.where(col)[0]
+        try:
+            col[idx+1] = True
+        except IndexError:
+            col[idx[:-2]+1] = True
+
+        idx = np.where(col)[0]
+        try:
+            col[idx+1] = True
+        except IndexError:
+            col[idx[:-2]+1] = True
+
+        mask[:, c] = col
+
+    return mask.astype(bool)
+
+
+def polar2cart(ro, phi, center=(0, 0)):
+    x = int(ro*np.cos(np.radians(phi))+center[0])
+    y = int(ro*np.sin(np.radians(phi))+center[1])
+    return(x, y)
+
+
 def dbz_hist(arrays, ax=None, plot=False):
 
     import matplotlib.mlab as mlab
+    from rv_utilities import pandas2stack
 
-    narrays = arrays.shape[0]
-    first = True
-    for n in range(0, narrays):
-        a = arrays.iloc[[n]].values[0]
-        if first:
-            A = a.copy()
-            first = False
-        else:
-            A = np.dstack((A, a))
-
-    # hist, bins = np.histogram(A, bins=range(-20, 80))
-    # return hist,bins,A
-
+    A = pandas2stack(arrays)
     mu = np.nanmean(A)
     sigma = np.nanstd(A)
 
@@ -606,31 +674,32 @@ def filter_sum(array_sum, dbz_mean=None):
     Removes artifacts in sum due to
     artifacts in reflectivity
     '''
-    topv = int(np.ceil(np.nanmax(array_sum)/10.)*10.)
+    arraysum = array_sum.copy()
+    topv = int(np.ceil(np.nanmax(arraysum)/10.)*10.)
     if topv == 30:
         delr = 1
     else:
-        delr = 10
-    hist, bins = np.histogram(array_sum,
+        delr = 5
+    hist, bins = np.histogram(arraysum,
                               bins=range(0, topv, delr))
-    count_thres = 30
+    count_thres = 5
     idx = np.where(hist < count_thres)[0]
     if (dbz_mean is None) and (idx.size > 0):
         target_count = bins[idx[0]]
-        array_sum[array_sum >= target_count] = np.nan
+        arraysum[arraysum >= target_count] = np.nan
     elif (idx.size > 0):
         target_count = bins[idx[0]]
-        cond1 = (array_sum >= target_count)
+        cond1 = (arraysum >= target_count)
         mean = np.nanmean(dbz_mean)
         std = np.nanstd(dbz_mean)
         botc = mean - std
         topc = mean + std
         cond2 = (dbz_mean <= botc)
         cond3 = (dbz_mean >= topc)
-        array_sum[cond1 & (cond2 | cond3)] = np.nan
+        arraysum[cond1 & (cond2 | cond3)] = np.nan
 
         # target_count = bins[idx[0]]
-        # cond1 = (array_sum >= target_count)
+        # cond1 = (arraysum >= target_count)
         # mean = np.nanmean(dbz_mean)
         # std = np.nanstd(dbz_mean)
         # coef = 0.5
@@ -640,12 +709,12 @@ def filter_sum(array_sum, dbz_mean=None):
         #     botc = mean - coef*std
         #     topc = mean + coef*std
         #     cond2 = (dbz_mean <= botc) | (dbz_mean >= topc)
-        #     array_sum[cond1 & cond2] = np.nan
-        #     hist, bins = np.histogram(array_sum, bins=range(0, topv))
+        #     arraysum[cond1 & cond2] = np.nan
+        #     hist, bins = np.histogram(arraysum, bins=range(0, topv))
         #     nsum = np.sum(hist[hist < count_thres])
         #     coef += 0.5
 
-    return array_sum
+    return arraysum
 
 
 def get_dbz_precip_accum(arrays):
@@ -814,14 +883,6 @@ def add_zisodop_arrow(ax=None, vr_array=None):
     aa.plot(x0, y0, 'go')
     aa.plot(x1, y1, 'ro')
     plt.show(block=False)
-
-
-def add_colorbar(ax, im, cbar_ticks):
-
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="2%", pad=0.05)
-    cbar = plt.colorbar(im, cax=cax, ticks=cbar_ticks)
-    return cbar
 
 
 def custom_cmap(cmap_set=None):
