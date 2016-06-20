@@ -277,13 +277,26 @@ def plot_single(xpol_dataframe, name=None, smode=None,
     xpolsingle.close()
 
 
-def get_data(case, scanmode, angle, homedir=None, index=None):
+def get_data(case, scanmode, angle, datadir=None, index=None):
+
+    '''
+        datadir is full path of directory containing cases 
+        with xpol files in netcdf format
+    '''
+
+    import os
+
+    if datadir is None:
+        try:
+            datadir = os.environ['XPOL_PATH']
+        except KeyError:
+            print('*** Need to provide datadir or export XPOL_PATH ***')
 
     if scanmode == 'PPI':
-        basestr = homedir + '/XPOL/netcdf/c{0}/PPI/elev{1}/'
+        basestr = datadir + '/netcdf/c{0}/PPI/elev{1}/'
         angle = angle * 10
     elif scanmode == 'RHI':
-        basestr = homedir + '/XPOL/netcdf/c{0}/RHI/az{1}/'
+        basestr = datadir + '/netcdf/c{0}/RHI/az{1}/'
 
     basedir = basestr.format(str(case).zfill(2), str(int(angle)).zfill(3))
     cdf_files = glob(basedir + '*.cdf')
@@ -369,17 +382,18 @@ def get_data(case, scanmode, angle, homedir=None, index=None):
     df['VR'] = vr_arrays
     df['EL'] = el_arrays
 
-    if scanmode == 'PPI':
-        name = '{0} {1}'
-        df.index.name = name.format(scanmode, str(angle / 10.))
-    else:
-        name = '{0} {1}-{2}'
-        if angle <= 180 and angle > 90:
-            df.index.name = name.format(scanmode, str(angle), str(angle + 180))
-        elif angle <= 90 and angle > 0:
-            df.index.name = name.format(scanmode, str(angle + 180), str(angle))
-        else:
-            df.index.name = name.format(scanmode, str(angle), str(angle - 180))
+    # -- this block messes with index retreival --
+    # if scanmode == 'PPI':
+    #     name = '{0} {1}'
+    #     df.index.name = name.format(scanmode, str(angle / 10.))
+    # else:
+    #     name = '{0} {1}-{2}'
+    #     if angle <= 180 and angle > 90:
+    #         df.index.name = name.format(scanmode, str(angle), str(angle + 180))
+    #     elif angle <= 90 and angle > 0:
+    #         df.index.name = name.format(scanmode, str(angle + 180), str(angle))
+    #     else:
+    #         df.index.name = name.format(scanmode, str(angle), str(angle - 180))
 
     if len(time_index2) > 0:
         df['time_az2'] = time_index2
