@@ -18,7 +18,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 # from mpl_toolkits.axes_grid1 import make_axes_locatable
 from rv_utilities import add_colorbar
 
-from mpl_toolkits.basemap import Basemap
+#from mpl_toolkits.basemap import Basemap
 
 
 def plot(array, ax=None, show=True, name=None, smode=None,
@@ -137,44 +137,45 @@ def plot(array, ax=None, show=True, name=None, smode=None,
 
 def plotm(array, ax=None, show=True, name=None):
 
-    if not ax:
-        fig, ax = plt.subplots()
-
-    if name == 'ZA':
-        vmin, vmax = [-10, 45]
-        cmap = 'jet'
-        cbar_ticks = range(vmin, vmax + 5, 5)
-    elif name == 'VR':
-        vmin, vmax = [-20, 20]
-        cmap = custom_cmap()
-        cbar_ticks = range(vmin, vmax + 5, 5)
-
-    radarx = np.arange(-58, 45.5, 0.5)
-    radary = np.arange(-58, 33.5, 0.5)
-    radarloc = (38.505260, -123.229607)  # at FRS
-    radarlon = cart2geo(radarx, 'WE', radarloc)
-    radarlat = cart2geo(radary, 'NS', radarloc)
-
-    m = Basemap(projection='merc',
-                llcrnrlat=min(radarlat),
-                urcrnrlat=max(radarlat),
-                llcrnrlon=min(radarlon),
-                urcrnrlon=max(radarlon),
-                lat_0=radarloc[0],
-                lon_0=radarloc[1],
-                resolution='i')
-
-    m.drawcoastlines()
-    im = m.imshow(array, interpolation='none', origin='lower',
-                  vmin=vmin, vmax=vmax, cmap=cmap)
-    add_rings(ax, space_km=10, color='k', mapping=[
-              m, radarloc[0], radarloc[1]])
-    add_locations(ax, m, 'all')
-
-    add_colorbar(ax, im, cbar_ticks)
-
-    plt.show(block=False)
-
+#    if not ax:
+#        fig, ax = plt.subplots()
+#
+#    if name == 'ZA':
+#        vmin, vmax = [-10, 45]
+#        cmap = 'jet'
+#        cbar_ticks = range(vmin, vmax + 5, 5)
+#    elif name == 'VR':
+#        vmin, vmax = [-20, 20]
+#        cmap = custom_cmap()
+#        cbar_ticks = range(vmin, vmax + 5, 5)
+#
+#    radarx = np.arange(-58, 45.5, 0.5)
+#    radary = np.arange(-58, 33.5, 0.5)
+#    radarloc = (38.505260, -123.229607)  # at FRS
+#    radarlon = cart2geo(radarx, 'WE', radarloc)
+#    radarlat = cart2geo(radary, 'NS', radarloc)
+#
+#    m = Basemap(projection='merc',
+#                llcrnrlat=min(radarlat),
+#                urcrnrlat=max(radarlat),
+#                llcrnrlon=min(radarlon),
+#                urcrnrlon=max(radarlon),
+#                lat_0=radarloc[0],
+#                lon_0=radarloc[1],
+#                resolution='i')
+#
+#    m.drawcoastlines()
+#    im = m.imshow(array, interpolation='none', origin='lower',
+#                  vmin=vmin, vmax=vmax, cmap=cmap)
+#    add_rings(ax, space_km=10, color='k', mapping=[
+#              m, radarloc[0], radarloc[1]])
+#    add_locations(ax, m, 'all')
+#
+#    add_colorbar(ax, im, cbar_ticks)
+#
+#    plt.show(block=False)
+    
+    pass
 
 def plot_mean(means, dates, name, smode, elev=None, title=None, colorbar=True):
 
@@ -280,8 +281,8 @@ def plot_single(xpol_dataframe, name=None, smode=None,
 def get_data(case, scanmode, angle, datadir=None, index=None):
 
     '''
-        datadir is full path of directory containing cases 
-        with xpol files in netcdf format
+        datadir is full path of directory containing 
+        subdirectories with netcdf files separated by case
     '''
 
     import os
@@ -293,10 +294,10 @@ def get_data(case, scanmode, angle, datadir=None, index=None):
             print('*** Need to provide datadir or export XPOL_PATH ***')
 
     if scanmode == 'PPI':
-        basestr = datadir + '/netcdf/c{0}/PPI/elev{1}/'
+        basestr = datadir + '/c{0}/PPI/elev{1}/'
         angle = angle * 10
     elif scanmode == 'RHI':
-        basestr = datadir + '/netcdf/c{0}/RHI/az{1}/'
+        basestr = datadir + '/c{0}/RHI/az{1}/'
 
     basedir = basestr.format(str(case).zfill(2), str(int(angle)).zfill(3))
     cdf_files = glob(basedir + '*.cdf')
@@ -474,11 +475,18 @@ def get_mean(arrays, minutes=None, name=None, good_thres=1000):
 
 
 def get_dbz_freq(arrays, percentile=None):
+    
+    
     from rv_utilities import pandas2stack
     narrays = arrays.shape[0]
     X = pandas2stack(arrays)
     Z = X[~np.isnan(X)].flatten()
     thres = np.percentile(Z, percentile)
+    
+    ' gets cummulative distribution of Z '
+    freqz,binsz=np.histogram(Z,bins=np.arange(-15,50),density=True)    
+    distrz = np.cumsum(freqz)    
+    
     a = arrays.iloc[[0]].values[0]
     COND = np.zeros(a.shape)
     for n in range(narrays):
@@ -510,7 +518,7 @@ def get_dbz_freq(arrays, percentile=None):
     ''' removes missing obs '''
     freq[freq == 0] = np.nan
 
-    return freq, thres, csum
+    return freq, thres, distrz, binsz
     # return csum, thres, mean
 
 
@@ -536,6 +544,27 @@ def convert_to_common_grid(input_array):
             common[:, offset:end] = a
             newdf.iloc[n] = common
         return newdf
+        
+    elif type(input_array) == pd.core.series.Series:
+        newdf = input_array.copy()
+        n = 0
+        for i, a in input_array.iteritems():
+            if a.shape == (61, 429):
+                midp = 286
+            elif a.shape == (61, 430):
+                midp = 215
+            elif a.shape == (61, 372):
+                midp = 157
+            offset = 290-midp
+            size = a.shape[1]
+            end = size+offset
+            common = np.empty((61, 505))
+            common[:] = np.nan
+            common[:, offset:end] = a
+            newdf.iloc[n] = common
+            n += 1
+        return newdf      
+        
     else:
         if input_array.shape == (61, 429):
             midp = 286
@@ -815,22 +844,33 @@ def get_max(arrays):
     return np.nanmax(a, axis=2)
 
 
-def add_rings(ax, space_km=10, color='k', mapping=False):
+def add_rings(ax, space_km=10, color='k', mapping=False,
+              center=(0,0), alpha=1.0, txtsize=12):
 
     # textdirection=225
     textdirection = -5
 
     for r in range(0, 60 + space_km, space_km):
 
-        ring = add_ring(ax=ax, radius=r, mapping=mapping, color=color)
+        ring = add_ring(ax=ax, radius=r, mapping=mapping,
+                        color=color, center=center, alpha=alpha)
         vert = ring.get_path().vertices
         x, y = vert[textdirection]
-        ax.text(x * r, y * r, str(r), ha='center', va='center',
+        if r == 60:
+            txt = str(r)+'\nkm'
+            va = 'top'
+            ha = 'center'
+        else:
+            txt = str(r)
+            va = 'top'
+            ha = 'center'
+        ax.text(x * r, y * r, txt, ha=ha, va=va,
                 bbox=dict(fc='none', ec='none', pad=2.),
-                clip_on=True)
+                clip_on=True, size=txtsize,linespacing=0.7)
+        
 
-
-def add_ring(ax=None, radius=None, mapping=False, color=None, lw=1):
+def add_ring(ax=None, radius=None, mapping=False, color=None,
+             lw=1, center=None, alpha=0.0):
 
     from shapely.geometry import Polygon
     from descartes import PolygonPatch
@@ -844,8 +884,8 @@ def add_ring(ax=None, radius=None, mapping=False, color=None, lw=1):
         circ = PolygonPatch(circraw, fc='none', ec='b')
         # foo=1
     else:
-        circ = plt.Circle((0, 0), radius, fill=False,
-                          color=color, linewidth=lw)
+        circ = plt.Circle(center, radius, fill=False,
+                          color=color, linewidth=lw, alpha=alpha)
         # foo=radius
 
     ax.add_patch(circ)
@@ -859,12 +899,12 @@ def add_background_circle(ax=None, radius=None, color=None):
     ax.add_patch(circ)
 
 
-def add_azimuths(ax, space_deg=30):
+def add_azimuths(ax, space_deg=30, lw=1, alpha=1.0):
 
-    xaz = ax.get_xlim()
-    yaz = ax.get_ylim()
-    ax.plot(xaz, [0, 0], color='k')
-    ax.plot([0, 0], yaz, color='k')
+#    xaz = ax.get_xlim()
+#    yaz = ax.get_ylim()
+    ax.plot([0, 0], [-60, 60], linewidth=lw, color='k', alpha=alpha)
+    ax.plot([-60, 60], [0,0], linewidth=lw, color='k', alpha=alpha)
 
 
 def add_zisodop_arrow(ax=None, vr_array=None):
@@ -936,7 +976,7 @@ def custom_cmap(cmap_set=None):
         colors4 = plt.cm.RdBu(np.linspace(0., 0.4, 64))
         colors = np.vstack((colors1, colors2, colors3, colors4))
 
-    newcmap = mcolors.LinearSegmentedColormap.from_list('newCmap', colors)
+    newcmap = mcolors.LinearSegmentedColormap.from_list(cmap_set, colors)
 
     return newcmap
 
