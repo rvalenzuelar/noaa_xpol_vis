@@ -58,13 +58,16 @@ ticklabsize = 14
 cbarlabsize = 14
 
 x08.plot(ax=ax0,name='contourf',mode='rhi',target='vr',
-         cbar=dict(loc='top',size='4%',units='[m/s]',fontsize=cbarlabsize),
+         cbar=dict(loc='top',size='4%',label='[m/s]',
+                   fontsize=cbarlabsize),
          xticklabs=False,
          tta=False,
+         casename='12-14Jan03',
          ticklabsize=ticklabsize)
 
 x08.plot(ax=ax1,name='contourf',mode='rhi',target='z',
-         cbar=dict(loc='top',size='4%',units='[%]',fontsize=cbarlabsize),
+         cbar=dict(loc='top',size='4%',label='[%]',
+                   fontsize=cbarlabsize),
          with_distr=True,
          yticklabs=False,
          xticklabs=False,
@@ -73,6 +76,7 @@ x08.plot(ax=ax1,name='contourf',mode='rhi',target='z',
 x10.plot(ax=ax2,name='contourf',mode='rhi',target='vr',
          yticklabs=False,
          xticklabs=False,
+         casename='15-16Feb03',
          tta=False)
 
 x10.plot(ax=ax3,name='contourf',mode='rhi',target='z',
@@ -84,6 +88,7 @@ x10.plot(ax=ax3,name='contourf',mode='rhi',target='z',
 x14.plot(ax=ax4,name='contourf',mode='rhi',target='vr',
          yticklabs=False,
          ticklabsize=ticklabsize,
+         casename='25-26Feb04',
          tta=False)
 
 x14.plot(ax=ax5,name='contourf',mode='rhi',target='z',
@@ -97,4 +102,8 @@ for ax in axes:
             weight='bold',transform=ax.transAxes,
             ha='left')
 
-plt.show()
+#plt.show()
+
+fname='/home/raul/Desktop/ntta_rhi_singlestorm.png'
+plt.savefig(fname, dpi=300, format='png',papertype='letter',
+            bbox_inches='tight')

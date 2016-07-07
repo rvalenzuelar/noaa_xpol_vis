@@ -26,8 +26,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib.cm as cm
+from edit_in_polar_kdtree import edit_polar
 from tta_analysis import tta_analysis
-from rv_utilities import add_colorbar,add_subplot_axes
+from rv_utilities import add_colorbar
+#from rv_utilities import add_subplot_axes
+
 
 
 class process:
@@ -41,7 +44,8 @@ class process:
         self.rhi_ntta = None
         self.ppi_tta = None
         self.ppi_ntta = None
-
+        self.cbar = None
+        
         rhi_df = make_dataframe(mode='rhi',case=case)
         ppi_df = make_dataframe(mode='ppi',case=case)
 
@@ -103,26 +107,26 @@ class process:
     def statistics(self):
         
         print('...calculating statistics')        
-        
-        if len(self.case)>1:
+ 
+        if self.rhi_tta is not None:
             rhi_tta_za = xpol.convert_to_common_grid(self.rhi_tta['ZA'])
             rhi_tta_vr = xpol.convert_to_common_grid(self.rhi_tta['VR'])
-            rhi_ntta_za = xpol.convert_to_common_grid(self.rhi_ntta['ZA'])
-            rhi_ntta_vr = xpol.convert_to_common_grid(self.rhi_ntta['VR'])
         else:
-            rhi_tta_za = self.rhi_tta['ZA']
-            rhi_tta_vr = self.rhi_tta['VR']
-            rhi_ntta_za = self.rhi_ntta['ZA']
-            rhi_ntta_vr = self.rhi_ntta['VR']
+            rhi_tta_za = None
+            rhi_tta_vr = None
             
-        ' use try for cases with tta=None'
-        try:
+        rhi_ntta_za = xpol.convert_to_common_grid(self.rhi_ntta['ZA'])
+        rhi_ntta_vr = xpol.convert_to_common_grid(self.rhi_ntta['VR']) 
+ 
+        
+        ''' use try for cases with tta=None '''
+        if rhi_tta_za is not None:
             out = xpol.get_dbz_freq(rhi_tta_za, percentile=50)
             dbz_freq, thres, distrz, binsz = out
             out = xpol.get_mean(rhi_tta_vr, name='VR')        
             vr_mean, good = out
             distr={'csum':distrz,'bins':binsz}
-        except TypeError:
+        else:
             vr_mean,dbz_freq,thres,distr = [None,None,None,None]            
             
         self.rhi_tta_vr = vr_mean
@@ -130,7 +134,7 @@ class process:
         self.rhi_tta_thres = thres
         self.rhi_tta_distrz = distr
 
-        ' use try for cases with tta=None'
+        ''' use try for cases with tta=None '''
         try:
             out = xpol.get_dbz_freq(self.ppi_tta['ZA'], percentile=50)
             dbz_freq, thres, distrz, binsz = out
@@ -169,11 +173,13 @@ class process:
 
     def plot(self,name=None,ax=None,mode=None,target=None,tta=True,
              show=False,with_distr=False, cbar=None, cvalues=None,
-             yticklabs=True, xticklabs=True, ticklabsize=16):
+             yticklabs=True, xticklabs=True, ticklabsize=16,
+             qc=False,terrain=False,coastline=False,bmap=False,
+             casename=None,sector=None):
         
         import numpy.ma as ma
-#        import cartopy.crs as ccrs
-#        import cartopy.feature as cfeature
+        import h5py
+        from mpl_toolkits.basemap import Basemap
         
         if tta is True:
             if mode == 'rhi' and target == 'z':
@@ -195,21 +201,15 @@ class process:
                 array = self.ppi_ntta_vr
             
         ''' set grid values '''
-        case = self.case
         if mode == 'ppi':
-            x = np.arange(-58, 45 +0.5, 0.5)        
-            y = np.arange(-58, 33 +0.5, 0.5)
+            x = np.arange(-58, 45.5, 0.5)        
+            y = np.arange(-58, 33.5, 0.5)
         elif mode == 'rhi':
-            if len(case) == 1 and case[0] in [11,13,14]:
-                x = np.arange(-30, 30.14 , 0.14)        
-            elif len(case) == 1 and case[0] == 12:
-                x = np.arange(-22, 30 , 0.14)  
-            elif len(case) == 1:
-                x = np.arange(-40, 20 , 0.14) 
-            else:
-                x = np.arange(-40, 30.6 , 0.14)  # for common grid
-            y = np.arange(  0, 12 +0.20, 0.20)        
+            x = np.arange(-40, 30.6 , 0.14)  # for common grid
+            y = np.arange(  0, 12.20, 0.20)        
         
+        X,Y = np.meshgrid(x,y)
+
         ''' set contour values '''
         if target == 'z':        
             cvalues = np.arange(20,110,10)        
@@ -219,61 +219,158 @@ class process:
                     cvalues = np.arange(-19,21,2)    
                 elif mode == 'rhi':
                     cvalues = np.arange(0,32,2)
-                
+
+        ''' make QC '''
+        if mode == 'ppi' and qc is True and array is not None:
+            qcs = []            
+            o = (116,118)
+            qcs.append(dict(origin=o,az=57,n=10,target='remove_line'))
+            qcs.append(dict(origin=o,az=232,n=10,target='remove_line'))
+            qcs.append(dict(origin=o,rang=115,n=30,target='remove_ring'))
+            qc = edit_polar(array,qcs)
+            array = qc.get_edited()
+        elif mode == 'rhi' and qc is True and array is not None:
+            qcs = []
+            o=(0,286)
+            n=200
+            tar1='remove_ring'
+            tar2='remove_line'
+            az=283
+            qcs.append(dict(origin=o,rang=210,n=n,target=tar1))
+            qcs.append(dict(origin=o,rang=220,n=n,target=tar1))
+            qcs.append(dict(origin=o,rang=230,n=n,target=tar1))
+            qcs.append(dict(origin=o,rang=240,n=n,target=tar1))
+            qcs.append(dict(origin=o,rang=250,n=n,target=tar1))
+            qcs.append(dict(origin=o,rang=260,n=n,target=tar1))
+            qcs.append(dict(origin=o,rang=270,n=n,target=tar1))
+            qcs.append(dict(origin=(0,305),az=az,n=10,target=tar2))
+            qcs.append(dict(origin=(0,325),az=az,n=10,target=tar2))
+            qcs.append(dict(origin=(0,345),az=az,n=10,target=tar2))
+            qcs.append(dict(origin=(0,365),az=az,n=10,target=tar2))
+            qcs.append(dict(origin=(0,385),az=az,n=10,target=tar2))
+
+            qc = edit_polar(array,qcs)
+            array = qc.get_edited()
+
         ''' set masked values '''
         if array is None:
             array = np.zeros((y.size,x.size))+np.nan
         arraym = ma.masked_where(np.isnan(array),array)
+            
         
-        ''' axis '''
+        ''' handle axis '''
         if ax is None:
                 fig,ax = plt.subplots()
                 self.fig = fig
         else:
             self.fig = None
         self.ax = ax
+
+        ''' make map axis '''       
+        lats,lons = get_geocoords(y.size, x.size)
+        m = Basemap(projection='merc',
+                    llcrnrlat=lats.min(),
+                    urcrnrlat=lats.max(),
+                    llcrnrlon=lons.min(),
+                    urcrnrlon=lons.max(),
+                    resolution='h',
+                    ax=ax)
+      
         
         ''' make plot '''
         cmap = get_colormap(mode=mode,target=target)
         if name == 'pcolor':        
             p = ax.pcolormesh(x,y,arraym)
         elif name =='contourf':
-            X,Y = np.meshgrid(x,y)
-            p = ax.contourf(X,Y,arraym,cvalues,cmap=cmap)
+            if bmap is False:
+                p = ax.contourf(X,Y,arraym,cvalues,cmap=cmap)
+            else:
+                X,Y = np.meshgrid(lons,lats)
+                p = m.contourf(X,Y,arraym,cvalues,cmap=cmap,
+                               latlon=True)
+                m.drawcoastlines(linewidth=1.5)
 
+
+        ''' add terrain map '''
+        if mode == 'ppi' and terrain is True:
+            f=h5py.File('obs_domain_elevation.h5','r')
+            dtm = f['/dtm'].value
+            f.close()
+            dtmm = ma.masked_where(dtm <= -15,dtm)
+            
+            if bmap is False:
+                ax.pcolormesh(X,Y,dtmm,vmin=0,vmax=1000,cmap='gray_r')
+            else:
+                X,Y = np.meshgrid(lons,lats)
+                m.pcolormesh(X,Y,dtmm,vmin=0,vmax=1000,cmap='gray_r',
+                             latlon=True) 
+                m.drawcoastlines(linewidth=1.5)
+
+        ''' add case name '''
+        if casename is not None:
+            if mode == 'ppi':
+                ax.text(0.95,0.01, casename, size=12,
+                    transform=ax.transAxes, ha='right',
+                    color=(0,0,0),weight='bold',
+                    backgroundcolor='w', clip_on=True)
+            elif mode == 'rhi':
+                ax.text(0.98,0.25, casename, size=12,
+                    transform=ax.transAxes, ha='right',
+                    color=(0,0,0),weight='bold',
+                    backgroundcolor='w', clip_on=True)                    
         
         ''' add colorbar '''
         if cbar is not None:
-            add_colorbar(ax,p,**cbar)
+            hcbar=add_colorbar(ax,p,**cbar)
+            xticklabs=hcbar.ax.xaxis.get_majorticklabels()
+            for n in range(1,len(xticklabs),2):
+                xticklabs[n].set_text('')
+            hcbar.ax.xaxis.set_ticklabels(xticklabs)
 
+            self.cbar = hcbar
 
         ''' terrain profile '''
         if mode == 'rhi':
             add_terrain_prof(ax,self.case[0])
 
-            
+
         ''' configure plot '''
+        mapping = [m,38.505260,-123.229607]
         make_pretty_plot(self,mode=mode,target=target,tta=tta,
                          yticklabs=yticklabs,xticklabs=xticklabs,
-                         ticklabsize=ticklabsize)  
+                         ticklabsize=ticklabsize,
+                         mapping=mapping,
+                         )  
+        
+        ''' add blocked sector '''
+        if mode == 'ppi' and target == 'z' and sector is not None:
+            xpol.add_sector(ax=ax, mapping=mapping,
+                            radius=60,
+                            color='g', lw=2,
+                            sector=sector,
+                            label='Beam\nBlocked')
 
-        ''' add cummulative distribution plot '''
-        if with_distr is True:
-            if mode == 'ppi':
-                scale=1.
-                rect = [0.65, 0.6, 0.3*scale, 0.3*scale]
-            elif mode == 'rhi':
-                scale = 1.7
-                rect = [0.75, 0.25, 0.12*scale, 0.3*scale]
-            subax = add_subplot_axes(ax, rect)
-            self.plot_dist(ax=subax,mode=mode,tta=tta)
 
+#        ''' add cummulative distribution plot '''
+#        if with_distr is True:
+#            if mode == 'ppi':
+#                scale=1.
+#                rect = [0.65, 0.6, 0.3*scale, 0.3*scale]
+#            elif mode == 'rhi':
+#                scale = 1.7
+#                rect = [0.75, 0.25, 0.12*scale, 0.3*scale]
+#            subax = add_subplot_axes(ax, rect)
+#            self.plot_dist(ax=subax,mode=mode,tta=tta)
+
+        ax.lons = lons
+        ax.lats = lats
         
         if show is True:
             plt.show()
 
    
-    def plot_dist(self,ax=None,mode=None,tta=True,show=False):
+    def plot_dist(self,ax=None,mode=None,tta=True,show=False,
+                  colores=None):
 
 
         if tta is True:
@@ -297,18 +394,26 @@ class process:
 
         if ax is None:
             fig,ax = plt.subplots()
+        
+        if colores:
+            color1=colores
+            color2=colores
+        else:
+            color1='b'
+            color2='r'
             
-        ax.plot(bins[:-1],array,lw=3,color='b')
-        plt.axvline(x=thres,lw=2,color='r')
-        plt.axvline(x=0,lw=2,color='k',linestyle=':')
+        h, = ax.plot(bins[:-1],array,lw=3,color=color1,
+                     label='line',alpha=1)
+        ax.axvline(x=thres-1,lw=2,color=color2,alpha=0.5)
+#        ax.axvline(x=0,lw=2,color='k',linestyle=':')
+#        ax.axhline(y=0.5,lw=2,color='k',linestyle=':')
         ax.set_xlim([-20,50])
         ax.set_ylim([0,1])        
-        ax.set_xticklabels([])
-        ax.set_yticklabels([])
         
         if show is True:
             plt.show()
-                
+        
+        return h
         
     def plot_ppi_rhi(self,with_distr=False):
 
@@ -331,9 +436,6 @@ class process:
 
         plt.show()
         
-
-def add_coastline(ax,x,y):
-    pass
 
 def get_colormap(mode=None,target=None):
     
@@ -358,7 +460,7 @@ def get_colormap(mode=None,target=None):
 
 def make_pretty_plot(self,mode=None,target=None,tta=True,
                      yticklabs=True,xticklabs=True,
-                     ticklabsize=12):
+                     ticklabsize=12,mapping=None):
     
     ax = self.ax
     fig = self.fig
@@ -367,8 +469,8 @@ def make_pretty_plot(self,mode=None,target=None,tta=True,
     txtsize = 12  # good size for letter size fig
     
     if mode == 'ppi':
-        ax.set_xlim([-60,40])
-        ax.set_ylim([-60,40])
+#        ax.set_xlim([-60,40])
+#        ax.set_ylim([-60,40])
         if fig is not None:
             fig.set_figheight(6.7) # in inches
             fig.set_figwidth(8.0)
@@ -380,20 +482,22 @@ def make_pretty_plot(self,mode=None,target=None,tta=True,
             else:
                 thr = self.ppi_ntta_thres
             txt1 = dbztxt.format(thr)
-            ax.text(0.85,0.55,txt1, size=txtsize,
-                transform=ax.transAxes, ha='center',
-                color=(1,0,0),weight='bold')             
+            ax.text(0.01,0.01,txt1, size=txtsize,
+                transform=ax.transAxes, ha='left',
+                color=(0,0,0),weight='bold')             
         elif target == 'vr':    
-            if tta is True:
+            if tta is True and self.ppi_tta is not None:
                 cnt = self.ppi_tta.index.size
-            else:
+            elif tta is False:
                 cnt = self.ppi_ntta.index.size
+            else:
+                cnt = 0
             txt1 = vrtxt.format(cnt)    
             ax.text(0.01,0.01,txt1, size=txtsize,
                 transform=ax.transAxes, ha='left',
                 color=(0,0,0),weight='bold') 
-        xpol.add_rings(ax, alpha=0.5, txtsize=txtsize)
-        xpol.add_azimuths(ax, alpha=0.3)
+        xpol.add_rings(ax, alpha=0.5, txtsize=txtsize, mapping=mapping)
+        xpol.add_azimuths(ax, alpha=0.3, mapping=mapping)
                
 
         
@@ -411,12 +515,14 @@ def make_pretty_plot(self,mode=None,target=None,tta=True,
             txt1 = dbztxt.format(thr)
             ax.text(0.98,0.13,txt1,size=txtsize,
                     transform=ax.transAxes,ha='right',
-                    color=(1,0,0), weight='bold')            
+                    color=(0,0,0), weight='bold')            
         elif target == 'vr':    
-            if tta is True:
+            if tta is True and self.rhi_tta is not None:
                 cnt = self.rhi_tta.index.size
-            else:
+            elif tta is False:
                 cnt = self.rhi_ntta.index.size
+            else:
+                cnt = 0
             txt1 = vrtxt.format(cnt)
             ax.text(0.98,0.13,txt1,size=txtsize,
                     transform=ax.transAxes,ha='right',
@@ -725,5 +831,18 @@ def make_ticklabels_invisible(fig):
             tl.set_visible(False)
 
 
+def get_geocoords(nlats,nlons):
+    
+    from geographiclib.geodesic import Geodesic        
 
+    origin = (38.505260,-123.229607)  # FRS
+    geolft = Geodesic.WGS84.Direct(origin[0],origin[1],270,58000)
+    georgt = Geodesic.WGS84.Direct(origin[0],origin[1],90,45000)
+    geotop = Geodesic.WGS84.Direct(origin[0],origin[1],0,33000)
+    geobot = Geodesic.WGS84.Direct(origin[0],origin[1],180,58000)    
+
+    lats = np.linspace(geobot['lat2'],geotop['lat2'],nlats)
+    lons = np.linspace(geolft['lon2'],georgt['lon2'],nlons)
+
+    return lats,lons
 

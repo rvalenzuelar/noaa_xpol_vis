@@ -478,10 +478,12 @@ def get_dbz_freq(arrays, percentile=None):
     
     
     from rv_utilities import pandas2stack
+    
     narrays = arrays.shape[0]
     X = pandas2stack(arrays)
     Z = X[~np.isnan(X)].flatten()
     thres = np.percentile(Z, percentile)
+
     
     ' gets cummulative distribution of Z '
     freqz,binsz=np.histogram(Z,bins=np.arange(-15,50),density=True)    
@@ -847,15 +849,13 @@ def get_max(arrays):
 def add_rings(ax, space_km=10, color='k', mapping=False,
               center=(0,0), alpha=1.0, txtsize=12):
 
-    # textdirection=225
-    textdirection = -5
 
     for r in range(0, 60 + space_km, space_km):
 
         ring = add_ring(ax=ax, radius=r, mapping=mapping,
                         color=color, center=center, alpha=alpha)
         vert = ring.get_path().vertices
-        x, y = vert[textdirection]
+#        print x,y
         if r == 60:
             txt = str(r)+'\nkm'
             va = 'top'
@@ -864,34 +864,74 @@ def add_rings(ax, space_km=10, color='k', mapping=False,
             txt = str(r)
             va = 'top'
             ha = 'center'
-        ax.text(x * r, y * r, txt, ha=ha, va=va,
-                bbox=dict(fc='none', ec='none', pad=2.),
-                clip_on=True, size=txtsize,linespacing=0.7)
+        if mapping:
+            textdirection=240
+            x, y = vert[textdirection]
+            ax.text(x, y, txt, ha=ha, va=va,
+                    bbox=dict(fc='none', ec='none', pad=2.),
+                    clip_on=True, size=txtsize,linespacing=0.7)            
+        else:
+            textdirection = -5
+            x, y = vert[textdirection]
+            ax.text(x * r, y * r, txt, ha=ha, va=va,
+                    bbox=dict(fc='none', ec='none', pad=2.),
+                    clip_on=True, size=txtsize,linespacing=0.7)
         
 
-def add_ring(ax=None, radius=None, mapping=False, color=None,
-             lw=1, center=None, alpha=0.0):
+def add_ring(ax=None, radius=None, mapping=None, color=None,
+             lw=1, center=None, alpha=1.0):
 
     from shapely.geometry import Polygon
     from descartes import PolygonPatch
 
-    if mapping:
+    if mapping is not None:
         m = mapping[0]
         olat = mapping[1]
         olon = mapping[2]
         c = Circlem.circle(m, olat, olon, radius * 1000.)
-        circraw = Polygon(c, linestyle=':')
-        circ = PolygonPatch(circraw, fc='none', ec='b')
-        # foo=1
+        circraw = Polygon(c)
+        circ = PolygonPatch(circraw, fc='none',
+                            ec=color, linewidth=lw, alpha=alpha)
     else:
         circ = plt.Circle(center, radius, fill=False,
                           color=color, linewidth=lw, alpha=alpha)
-        # foo=radius
 
     ax.add_patch(circ)
 
     return circ
 
+
+def add_sector(ax=None, radius=None, mapping=None, color=None,
+             lw=2, center=None, alpha=1.0, sector=None,
+             label=None):
+    
+    from shapely.geometry import Polygon
+    from descartes import PolygonPatch
+
+    if mapping is not None:
+        m = mapping[0]
+        olat = mapping[1]
+        olon = mapping[2]
+        s = Circlem.sector(m, olat, olon, radius * 1000., sector)
+        
+        circraw = Polygon(s)
+        circ = PolygonPatch(circraw, fc='none',
+                            ec=color, linewidth=lw, alpha=alpha)
+    else:
+        circ = plt.Circle(center, radius, fill=False,
+                          color=color, linewidth=lw, alpha=alpha)
+
+    ax.add_patch(circ)
+
+    median = np.median(sector)
+    txlon,txlat=Circlem.pick_circle_point(olon, olat,
+                              median, 50*1000.)
+
+    x,y=m(txlon,txlat)
+    ax.text(x,y,label,ha='center',va='center',
+            color=color,size=14,weight='bold',rotation=180-median)
+
+    return circ
 
 def add_background_circle(ax=None, radius=None, color=None):
 
@@ -899,12 +939,28 @@ def add_background_circle(ax=None, radius=None, color=None):
     ax.add_patch(circ)
 
 
-def add_azimuths(ax, space_deg=30, lw=1, alpha=1.0):
+def add_azimuths(ax, space_deg=30, lw=2, alpha=1.0, mapping=False):
 
-#    xaz = ax.get_xlim()
-#    yaz = ax.get_ylim()
-    ax.plot([0, 0], [-60, 60], linewidth=lw, color='k', alpha=alpha)
-    ax.plot([-60, 60], [0,0], linewidth=lw, color='k', alpha=alpha)
+
+    if mapping:
+        m = mapping[0]        
+        olat = mapping[1]
+        olon = mapping[2]
+        d = 5  #deg
+
+        lats=[olat-d, olat+d]
+        lons=[olon,olon]
+        x,y = m(lons,lats)
+        m.plot(x, y,linewidth=lw, color='k', alpha=alpha)
+
+        lats=[olat, olat]
+        lons=[olon-d,olon+d]
+        x,y = m(lons,lats)
+        m.plot(x, y,linewidth=lw, color='k', alpha=alpha)
+
+    else:
+        ax.plot([0, 0], [-60, 60], linewidth=lw, color='k', alpha=alpha)
+        ax.plot([-60, 60], [0,0], linewidth=lw, color='k', alpha=alpha)
 
 
 def add_zisodop_arrow(ax=None, vr_array=None):

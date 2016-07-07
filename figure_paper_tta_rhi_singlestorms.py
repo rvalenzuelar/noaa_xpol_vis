@@ -19,8 +19,8 @@ try:
 except NameError:
     x08=xta.process(case=[8])
 
-try
-    x09:
+try:
+    x09
 except NameError:
     x09=xta.process(case=[9])
     
@@ -64,18 +64,20 @@ ticklabsize = 16
 cbarlabsize = 16
 
 x08.plot(ax=ax0,name='contourf',mode='rhi',target='vr',
-         cbar=dict(loc='top',size='4%',units='[m/s]',fontsize=cbarlabsize),
+         cbar=dict(loc='top',size='4%',label='[m/s]',fontsize=cbarlabsize),
          xticklabs=False,
+         casename='12-14Jan03',
          ticklabsize=ticklabsize)
 
 x08.plot(ax=ax1,name='contourf',mode='rhi',target='z',
-         cbar=dict(loc='top',size='4%',units='[%]',fontsize=cbarlabsize),
+         cbar=dict(loc='top',size='4%',label='[%]',fontsize=cbarlabsize),
          with_distr=True,
          yticklabs=False,
          xticklabs=False)
 
 x09.plot(ax=ax2,name='contourf',mode='rhi',target='vr',
          yticklabs=False,
+         casename='21-23Jan03',
          xticklabs=False)
 
 x09.plot(ax=ax3,name='contourf',mode='rhi',target='z',
@@ -85,6 +87,7 @@ x09.plot(ax=ax3,name='contourf',mode='rhi',target='z',
 
 x12.plot(ax=ax4,name='contourf',mode='rhi',target='vr',
          yticklabs=False,
+         casename='02-03Feb04',
          xticklabs=False)
 
 x12.plot(ax=ax5,name='contourf',mode='rhi',target='z',
@@ -94,6 +97,7 @@ x12.plot(ax=ax5,name='contourf',mode='rhi',target='z',
 
 x13.plot(ax=ax6,name='contourf',mode='rhi',target='vr',
          yticklabs=False,
+         casename='16-18Feb04',
          ticklabsize=ticklabsize)
 
 x13.plot(ax=ax7,name='contourf',mode='rhi',target='z',
@@ -106,4 +110,8 @@ for ax in axes:
             weight='bold',transform=ax.transAxes,
             ha='left')
 
-plt.show()
+#plt.show()
+
+fname='/home/raul/Desktop/tta_rhi_singlestorm.png'
+plt.savefig(fname, dpi=300, format='png',papertype='letter',
+            bbox_inches='tight')
