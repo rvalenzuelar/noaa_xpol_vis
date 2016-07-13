@@ -13,7 +13,7 @@ from matplotlib.gridspec import GridSpecFromSubplotSpec as gssp
 try:
     xall
 except NameError:
-    xall=xta.process(case=[8, 9, 10, 11, 13, 14])
+    xall=xta.process(case=[8, 9, 10, 11, 12, 13, 14])
 
 scale=1.2
 plt.figure(figsize=(7.5*scale, 11*scale))

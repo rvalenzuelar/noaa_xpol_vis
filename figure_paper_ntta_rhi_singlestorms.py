@@ -88,7 +88,7 @@ x10.plot(ax=ax3,name='contourf',mode='rhi',target='z',
 x14.plot(ax=ax4,name='contourf',mode='rhi',target='vr',
          yticklabs=False,
          ticklabsize=ticklabsize,
-         casename='25-26Feb04',
+         casename='25Feb04',
          tta=False)
 
 x14.plot(ax=ax5,name='contourf',mode='rhi',target='z',

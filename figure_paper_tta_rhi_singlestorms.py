@@ -87,7 +87,7 @@ x09.plot(ax=ax3,name='contourf',mode='rhi',target='z',
 
 x12.plot(ax=ax4,name='contourf',mode='rhi',target='vr',
          yticklabs=False,
-         casename='02-03Feb04',
+         casename='02Feb04',
          xticklabs=False)
 
 x12.plot(ax=ax5,name='contourf',mode='rhi',target='z',

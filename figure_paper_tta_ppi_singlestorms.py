@@ -82,7 +82,7 @@ x09.plot(ax=ax3,name='contourf',mode='ppi',target='z',
 
 x12.plot(ax=ax4,name='contourf',mode='ppi',target='vr',
          cvalues=cvalues,terrain=True,bmap=True,
-         qc=True,casename='02-03Feb04')
+         qc=True,casename='02Feb04')
 
 x12.plot(ax=ax5,name='contourf',mode='ppi',target='z',
          terrain=True,bmap=True,

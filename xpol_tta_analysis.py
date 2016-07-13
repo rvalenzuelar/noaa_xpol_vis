@@ -46,7 +46,17 @@ class process:
         self.ppi_ntta = None
         self.cbar = None
         
-        rhi_df = make_dataframe(mode='rhi',case=case)
+        ''' 
+        if process all the cases then remove case 12 
+        from rhis and insert after processing making
+        rhis df
+        '''
+        if len(case)==7:
+            case.remove(12) 
+            rhi_df = make_dataframe(mode='rhi',case=case)
+            case.insert(4,12)
+        else:
+            rhi_df = make_dataframe(mode='rhi',case=case)
         ppi_df = make_dataframe(mode='ppi',case=case)
 
         years = []
@@ -94,7 +104,6 @@ class process:
                         NTTAdf = NTTAdf.append(grpvalue)
             except KeyError:
                 pass
-
 
         if mode == 'rhi':
             self.rhi_tta = TTAdf
@@ -619,7 +628,7 @@ def make_dataframe(mode=None,case=None):
     first = True
     for c in case:
 
-        elevation, azimuth, _, maxv = setcase[c]
+        elevation, azimuth, _, _ = setcase[c]
 
         if mode == 'rhi':
             if first is True:
