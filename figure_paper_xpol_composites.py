@@ -22,7 +22,6 @@ gs0 = gridspec.GridSpec(1, 2,
                         wspace=0.01)
 
 height_ratios = [2.5,1,2.5,1]
-width_ratios = [1,1,1,0.8]
 
 gs00 = gssp(4, 1,
             subplot_spec=gs0[0],
