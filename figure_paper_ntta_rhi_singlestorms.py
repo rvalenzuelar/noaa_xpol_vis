@@ -8,8 +8,11 @@ Created on Wed Jun 22 09:07:32 2016
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import xpol_tta_analysis as xta
+import mpl_toolkits.axisartist as AA
+import matplotlib as mpl
 from matplotlib.gridspec import GridSpecFromSubplotSpec as gssp
-
+from rv_utilities import add_colorbar
+mpl.rcParams['font.size']=15
 
 ''' 
     if instances do not exist in iPython namespace
@@ -31,7 +34,8 @@ except NameError:
     x14=xta.process(case=[14])
 
 scale=1.6
-plt.figure(figsize=(8*scale, 3*scale))
+fig = plt.figure(figsize=(8*scale, 3*scale))
+
 gs0 = gridspec.GridSpec(1, 2,
                         top=0.99, bottom=0.01,
                         left=0.15, right=0.85,
@@ -57,26 +61,23 @@ axes = [ax0, ax1, ax2, ax3, ax4, ax5]
 ticklabsize = 14
 cbarlabsize = 14
 
+ax0.text(0.95, 1.05 ,'NO-TTA',transform=ax0.transAxes,
+         fontsize=15,weight='bold')
+
 x08.plot(ax=ax0,name='contourf',mode='rhi',target='vr',
-         cbar=dict(loc='top',size='4%',label='[m/s]',
-                   fontsize=cbarlabsize),
          xticklabs=False,
          tta=False,
-         casename='12-14Jan03',
          ticklabsize=ticklabsize)
 
 x08.plot(ax=ax1,name='contourf',mode='rhi',target='z',
-         cbar=dict(loc='top',size='4%',label='[%]',
-                   fontsize=cbarlabsize),
          with_distr=True,
          yticklabs=False,
          xticklabs=False,
          tta=False)
 
 x10.plot(ax=ax2,name='contourf',mode='rhi',target='vr',
-         yticklabs=False,
+         ylabel=False,
          xticklabs=False,
-         casename='15-16Feb03',
          tta=False)
 
 x10.plot(ax=ax3,name='contourf',mode='rhi',target='z',
@@ -85,25 +86,48 @@ x10.plot(ax=ax3,name='contourf',mode='rhi',target='z',
          xticklabs=False,
          tta=False)
 
-x14.plot(ax=ax4,name='contourf',mode='rhi',target='vr',
-         yticklabs=False,
+hvr = x14.plot(ax=ax4,name='contourf',mode='rhi',target='vr',
+         ylabel=False,
          ticklabsize=ticklabsize,
-         casename='25Feb04',
          tta=False)
 
-x14.plot(ax=ax5,name='contourf',mode='rhi',target='z',
+hz = x14.plot(ax=ax5,name='contourf',mode='rhi',target='z',
          with_distr=True,
          yticklabs=False,
          ticklabsize=ticklabsize,
          tta=False)
 
+''' add vertical date labels '''
+ax1.text(1,0.5,'12-14Jan03',fontsize=15,va='center',
+         transform=ax1.transAxes,rotation=-90)
+ax3.text(1,0.5,'15-16Feb03',fontsize=15,va='center',
+         transform=ax3.transAxes,rotation=-90)
+ax5.text(1,0.5,'25Feb04',fontsize=15,va='center',
+         transform=ax5.transAxes,rotation=-90)
+
+''' make floating axis colorbar for vr y z '''
+#                  [left, bott, wid, hgt]
+cbVr = AA.Axes(fig,[0.15, -0.13, 0.34, 0.75])
+cbZ  = AA.Axes(fig,[0.51, -0.13, 0.34, 0.75])
+add_colorbar(cbVr,hvr,label='[m/s]',loc='bottom',
+             ticks=range(0,32,2),
+             ticklabels=range(0,34,4))
+add_colorbar(cbZ,hz,label='[%]',loc='bottom',
+             ticks=range(20,110,10),
+             ticklabels=range(20,120,20))
+fig.add_axes(cbVr)
+fig.add_axes(cbZ)
+cbVr.remove() # leave only colorbar
+cbZ.remove() # leave only colorbar
+
+''' add axis id '''
 for ax in axes:
     ax.text(0.9,0.85,ax.get_gid(),size=14,
             weight='bold',transform=ax.transAxes,
             ha='left')
 
-#plt.show()
+plt.show()
 
-fname='/home/raul/Desktop/ntta_rhi_singlestorm.png'
-plt.savefig(fname, dpi=300, format='png',papertype='letter',
-            bbox_inches='tight')
+#fname='/home/raul/Desktop/ntta_rhi_singlestorm.png'
+#plt.savefig(fname, dpi=300, format='png',papertype='letter',
+#            bbox_inches='tight')

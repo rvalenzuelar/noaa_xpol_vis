@@ -7,10 +7,17 @@ Created on Tue Jun 21 12:28:16 2016
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import xpol_tta_analysis as xta
+import mpl_toolkits.axisartist as AA
+import matplotlib as mpl
+import numpy as np
 from matplotlib.gridspec import GridSpecFromSubplotSpec as gssp
-
+from rv_utilities import add_colorbar
+mpl.rcParams['font.size']=15
 
 ''' 
+    use:
+        %run -i figure_paper_tta_ppi_singlestorms
+        
     if instances do not exist in iPython namespace
     then create them
 '''
@@ -34,73 +41,149 @@ try:
 except NameError:
     x13=xta.process(case=[13])
 
-plt.figure(figsize=(8.5, 11))
+def main():
 
-gs0 = gridspec.GridSpec(1, 2,
-                        top=0.99, bottom=0.01,
-                        left=0.15, right=0.85,
-                        wspace=0.05)
-gs00 = gssp(4, 1,
-            subplot_spec=gs0[0],
-            wspace=0, hspace=0)
-gs01 = gssp(4, 1,
-            subplot_spec=gs0[1],
-            wspace=0, hspace=0)
+    fig = plt.figure(figsize=(8.5, 11))
+    
+    gs0 = gridspec.GridSpec(1, 2,
+                            top=0.99, bottom=0.01,
+                            left=0.15, right=0.85,
+                            wspace=0.05)
+    gs00 = gssp(4, 1,
+                subplot_spec=gs0[0],
+                wspace=0, hspace=0)
+    gs01 = gssp(4, 1,
+                subplot_spec=gs0[1],
+                wspace=0, hspace=0)
+    
+    ax0 = plt.subplot(gs00[0],gid='(a)')
+    ax1 = plt.subplot(gs01[0],gid='(b)')
+    ax2 = plt.subplot(gs00[1],gid='(c)')
+    ax3 = plt.subplot(gs01[1],gid='(d)')
+    ax4 = plt.subplot(gs00[2],gid='(e)')
+    ax5 = plt.subplot(gs01[2],gid='(f)')
+    ax6 = plt.subplot(gs00[3],gid='(g)')
+    ax7 = plt.subplot(gs01[3],gid='(h)')
+    
+    axes = [ax0, ax1, ax2, ax3, ax4, ax5, ax6, ax7]
+    
+    cvalues = range(-30,34,4)
+    
+    ax0.text(0.95, 1.05 ,'TTA',transform=ax0.transAxes,
+             fontsize=15,weight='bold')
+    
+    x08.plot(ax=ax0,name='contourf',mode='ppi',target='vr',
+             cvalues=cvalues,terrain=True,bmap=True,
+             qc=True)
+    
+    hdtm = x08.plot(ax=ax1,name='contourf',mode='ppi',target='z',
+             terrain=True,bmap=True,
+             sector=range(130,160),
+             qc=True)
+    
+    x09.plot(ax=ax2,name='contourf',mode='ppi',target='vr',
+             cvalues=cvalues,terrain=True,bmap=True,
+             qc=True)
+    
+    x09.plot(ax=ax3,name='contourf',mode='ppi',target='z',
+             terrain=True,bmap=True,
+             sector=range(130,160),
+             qc=True)
+    
+    x12.plot(ax=ax4,name='contourf',mode='ppi',target='vr',
+             cvalues=cvalues,terrain=True,bmap=True,
+             qc=True)
+    
+    x12.plot(ax=ax5,name='contourf',mode='ppi',target='z',
+             terrain=True,bmap=True,
+             sector=range(150,180),
+             qc=True)
+    
+    x13.plot(ax=ax6,name='contourf',mode='ppi',target='vr',
+             cbar=dict(loc='bottom',label='[m/s]',size='3%'),
+             cvalues=cvalues,
+             terrain=True, bmap=True,
+             qc=True)
+    
+    x13.plot(ax=ax7,name='contourf',mode='ppi',target='z',
+             cbar=dict(loc='bottom',label='[%]',size='3%'),
+             terrain=True, bmap=True,
+             sector=range(150,180),
+             qc=True)
+    
+    ''' add vertical date labels '''
+    ax1.text(1,0.6,'12-14Jan03',fontsize=15,
+             transform=ax1.transAxes,rotation=-90)
+    ax3.text(1,0.6,'21-23Jan03',fontsize=15,
+             transform=ax3.transAxes,rotation=-90)
+    ax5.text(1,0.6,'02Feb04',fontsize=15,
+             transform=ax5.transAxes,rotation=-90)
+    ax7.text(1,0.6,'16-18Feb04',fontsize=15,
+             transform=ax7.transAxes,rotation=-90)
+    
+    
+    ''' make floating axis colorbar for terrain '''
+    #                  [left, bott, wid, hgt]
+    axaa = AA.Axes(fig,[-0.36,0.85,0.5,0.1])
+    axaa.tick_params(labelsize=25)
+    add_colorbar(axaa,hdtm,label='',
+                 ticks=range(0,1001,1000),
+                 ticklabels=['0','1.0'])
+    fig.add_axes(axaa)
+    axaa.remove() # leave only colorbar
+    ax0.text(-0.18, 0.93,'[km]',transform=ax0.transAxes)
+    
+    ''' add axis id '''
+    for ax in axes:
+        ax.text(0.05,0.9,ax.get_gid(),size=14,
+                weight='bold',transform=ax.transAxes)
+    
+    ''' add PPI arrows '''
+    def arrow_end(st_co,r,az):
+        en_co=[st_co[0],st_co[1]]
+        en_co[0]+=r*np.sin(np.radians(az))
+        en_co[1]+=r*np.cos(np.radians(az))
+        return (en_co[0],en_co[1])
+    arrows1={'arrow1':{'c0':(120,98),'az':310},
+             'arrow2':{'c0':(80,85),'az':330},
+             'arrow3':{'c0':(20,78),'az':345},
+            }
+    arrows2={'arrow1':{'c0':(120,98),'az':310},
+             'arrow2':{'c0':(80,78),'az':330},
+             'arrow3':{'c0':(20,105),'az':0},
+            }
+    arrows3={'arrow1':{'c0':(120,98),'az':300},
+             'arrow2':{'c0':(80,90),'az':350},
+             'arrow3':{'c0':(20,110),'az':10},
+            } 
+    arrows4={'arrow1':{'c0':(120,98),'az':300},
+             'arrow2':{'c0':(80,78),'az':330},
+             'arrow3':{'c0':(20,95),'az':355},
+            }              
+    scale = 4.1 # use for output figure
+#    scale = 1.0 # use for iPython figure
+    length = 30
+    arrows=(arrows1,arrows2,arrows3,arrows4)
+    axes = (axes[0],axes[2],axes[4],axes[6])
+    for ax,arrow in zip(axes,arrows):
+        for _,arr in arrow.iteritems():
+            c0 = tuple(v*scale for v in arr['c0'])
+            az = arr['az']
+            ax.annotate("",
+                        xy         = arrow_end(c0,length*scale,az),
+                        xytext     = c0,
+                        xycoords   = 'axes pixels',
+                        textcoords = 'axes pixels',
+                        arrowprops = dict(
+                                          shrinkA=7,
+                                          shrinkB=7,
+                                          fc='w',
+                                          ec='k',
+                                          lw=1),
+                        zorder=1,
+                        )
 
-ax0 = plt.subplot(gs00[0],gid='(a)')
-ax1 = plt.subplot(gs01[0],gid='(b)')
-ax2 = plt.subplot(gs00[1],gid='(c)')
-ax3 = plt.subplot(gs01[1],gid='(d)')
-ax4 = plt.subplot(gs00[2],gid='(e)')
-ax5 = plt.subplot(gs01[2],gid='(f)')
-ax6 = plt.subplot(gs00[3],gid='(g)')
-ax7 = plt.subplot(gs01[3],gid='(h)')
-
-axes = [ax0, ax1, ax2, ax3, ax4, ax5, ax6, ax7]
-
-cvalues = range(-26,28,4)
-
-x08.plot(ax=ax0,name='contourf',mode='ppi',target='vr',
-         cbar=dict(loc='top',label='[m/s]'),
-         cvalues=cvalues,terrain=True,bmap=True,
-         qc=True,casename='12-14Jan03')
-
-x08.plot(ax=ax1,name='contourf',mode='ppi',target='z',
-         cbar=dict(loc='top',label='[%]'),
-         terrain=True,bmap=True,
-         sector=range(130,160),
-         qc=True)
-
-x09.plot(ax=ax2,name='contourf',mode='ppi',target='vr',
-         cvalues=cvalues,terrain=True,bmap=True,
-         qc=True,casename='21-23Jan03')
-
-x09.plot(ax=ax3,name='contourf',mode='ppi',target='z',
-         terrain=True,bmap=True,
-         sector=range(130,160),
-         qc=True)
-
-x12.plot(ax=ax4,name='contourf',mode='ppi',target='vr',
-         cvalues=cvalues,terrain=True,bmap=True,
-         qc=True,casename='02Feb04')
-
-x12.plot(ax=ax5,name='contourf',mode='ppi',target='z',
-         terrain=True,bmap=True,
-         sector=range(150,180),
-         qc=True)
-
-x13.plot(ax=ax6,name='contourf',mode='ppi',target='vr',
-         cvalues=cvalues,terrain=True,bmap=True,
-         qc=True,casename='16-18Feb04')
-
-x13.plot(ax=ax7,name='contourf',mode='ppi',target='z',
-         terrain=True,bmap=True,
-         sector=range(150,180),
-         qc=True)
-
-for ax in axes:
-    ax.text(0.05,0.9,ax.get_gid(),size=14,
-            weight='bold',transform=ax.transAxes)
+main()
 
 #plt.show()
 

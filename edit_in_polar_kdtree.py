@@ -3,6 +3,9 @@
 Created on Thu Jun 23 16:24:41 2016
 
 @author: raul
+
+Edit sweep file in polar space (az, range)
+
 """
 
 import numpy as np

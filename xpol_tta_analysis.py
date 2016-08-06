@@ -67,7 +67,9 @@ class process:
             if c in [11,12,13,14] and 2004 not in years:
                 years.append(2004)
                 
-        tta_dates = get_tta_dates(years)
+        params = dict(wdir_surf=125,wdir_wprof=170,
+                      rain_czd=0.25,nhours=2)                
+        tta_dates = get_tta_dates(years, params)
 
         self.process(rhi_df, tta_dates, mode='rhi')
         self.process(ppi_df, tta_dates, mode='ppi')
@@ -182,9 +184,9 @@ class process:
 
     def plot(self,name=None,ax=None,mode=None,target=None,tta=True,
              show=False,with_distr=False, cbar=None, cvalues=None,
-             yticklabs=True, xticklabs=True, ticklabsize=16,
-             qc=False,terrain=False,coastline=False,bmap=False,
-             casename=None,sector=None):
+             yticklabs=True, ylabel=True, xticklabs=True, xlabel=True,
+             ticklabsize=16, qc=False,terrain=False,
+             coastline=False,bmap=False, casename=None,sector=None):
         
         import numpy.ma as ma
         import h5py
@@ -302,7 +304,7 @@ class process:
 
         ''' add terrain map '''
         if mode == 'ppi' and terrain is True:
-            f=h5py.File('obs_domain_elevation.h5','r')
+            f = h5py.File('obs_domain_elevation.h5','r')
             dtm = f['/dtm'].value
             f.close()
             dtmm = ma.masked_where(dtm <= -15,dtm)
@@ -311,7 +313,7 @@ class process:
                 ax.pcolormesh(X,Y,dtmm,vmin=0,vmax=1000,cmap='gray_r')
             else:
                 X,Y = np.meshgrid(lons,lats)
-                m.pcolormesh(X,Y,dtmm,vmin=0,vmax=1000,cmap='gray_r',
+                hdtm = m.pcolormesh(X,Y,dtmm,vmin=0,vmax=1000,cmap='gray_r',
                              latlon=True) 
                 m.drawcoastlines(linewidth=1.5)
 
@@ -345,10 +347,10 @@ class process:
 
         ''' configure plot '''
         mapping = [m,38.505260,-123.229607]
-        make_pretty_plot(self,mode=mode,target=target,tta=tta,
-                         yticklabs=yticklabs,xticklabs=xticklabs,
-                         ticklabsize=ticklabsize,
-                         mapping=mapping,
+        make_pretty_plot(self,mode=mode, target=target, tta=tta,
+                              yticklabs=yticklabs, xticklabs=xticklabs,
+                              ticklabsize=ticklabsize, xlabel=xlabel,
+                              ylabel=ylabel, mapping=mapping,
                          )  
         
         ''' add blocked sector '''
@@ -360,7 +362,7 @@ class process:
                             label='Beam\nBlocked')
 
 
-#        ''' add cummulative distribution plot '''
+        ''' add cummulative distribution plot '''
 #        if with_distr is True:
 #            if mode == 'ppi':
 #                scale=1.
@@ -377,6 +379,16 @@ class process:
         if show is True:
             plt.show()
 
+        try:
+            return hdtm
+        except UnboundLocalError:
+            pass
+   
+        try:
+            return p
+        except UnboundLocalError:
+            pass   
+   
    
     def plot_dist(self,ax=None,mode=None,tta=True,show=False,
                   colores=None):
@@ -469,6 +481,7 @@ def get_colormap(mode=None,target=None):
 
 def make_pretty_plot(self,mode=None,target=None,tta=True,
                      yticklabs=True,xticklabs=True,
+                     ylabel=True, xlabel=True,
                      ticklabsize=12,mapping=None):
     
     ax = self.ax
@@ -541,14 +554,16 @@ def make_pretty_plot(self,mode=None,target=None,tta=True,
         if yticklabs is False:
             ax.set_yticklabels([])
         else:
-            ax.set_ylabel('Altitude [km] MSL',
-                          fontdict=dict(size=ticklabsize-1))
+            if ylabel is True:
+                ax.set_ylabel('Altitude [km] MSL',
+                              fontdict=dict(size=ticklabsize-1))
             
         if xticklabs is False:
             ax.set_xticklabels([])
         else:
-            ax.set_xlabel('Distance from the radar [km]',
-                          fontdict=dict(size=ticklabsize-1))
+            if xlabel is True:
+                ax.set_xlabel('Distance from the radar [km]',
+                              fontdict=dict(size=ticklabsize-1))
 
         xticks = ax.xaxis.get_major_ticks()
         xticks[0].label1.set_visible(False)
@@ -586,11 +601,8 @@ def add_terrain_prof(ax,case):
     ax.fill_between(x, 0, y,facecolor='gray')
     
 
-def get_tta_dates(years):
+def get_tta_dates(years,params):
     
-        params = dict(wdir_surf=125,wdir_wprof=170,
-                      rain_czd=0.25,nhours=2)
-
         tta_dates03 = []
         tta_dates04 = []
         
