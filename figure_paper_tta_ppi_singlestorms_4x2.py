@@ -137,6 +137,12 @@ def main():
     axaa.remove() # leave only colorbar
     ax0.text(-0.18, 0.93,'[km]',transform=ax0.transAxes)
     
+#    add_floating_colorbar(fig=fig,
+#                          im=hdtm,
+#                          ticks=ticks,
+#                          ticklabels=None,
+#                          position=[-0.36,0.85,0.5,0.1])    
+    
     ''' add axis id '''
     for ax in axes:
         ax.text(0.05,0.9,ax.get_gid(),size=14,
