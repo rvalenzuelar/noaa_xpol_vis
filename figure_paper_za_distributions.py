@@ -14,42 +14,46 @@ rcParams['ytick.labelsize'] = 15
 rcParams['axes.labelsize'] = 15
 
 ''' have tta and no-tta '''
+
+params = dict(wdir_surf=130,wdir_wprof=170,
+              rain_czd=0.25,nhours=2)
+
 try:
     x08
 except NameError:
-    x08=xta.process(case=[8])
+    x08=xta.process(case=[8],params=params)
 
 try:
     x09
 except NameError:
-    x09=xta.process(case=[9])
+    x09=xta.process(case=[9],params=params)
+
+try:
+    x11
+except NameError:
+    x11=xta.process(case=[11],params=params)
     
 try:
     x12
 except NameError:
-    x12=xta.process(case=[12])
+    x12=xta.process(case=[12],params=params)
 
 try:
     x13
 except NameError:
-    x13=xta.process(case=[13])
+    x13=xta.process(case=[13],params=params)
 
 
 ''' only have no-tta '''
 try:
     x10
 except NameError:
-    x10=xta.process(case=[10])
-
-try:
-    x11
-except NameError:
-    x11=xta.process(case=[11])
+    x10=xta.process(case=[10],params=params)
 
 try:
     x14
 except NameError:
-    x14=xta.process(case=[14])
+    x14=xta.process(case=[14],params=params)
     
     
 fig,ax = plt.subplots(2,2,figsize=(8,8),
@@ -97,10 +101,10 @@ ax[1].text(0.5,1.1,'NO-TTA',size=15,transform=ax[1].transAxes,
 datelabs=['12-14Jan03',
           '21-23Jan03',
           '15-16Feb03',
-          '09-10Jan03',
-          '02-03Feb04',
+          '09Jan03',
+          '02Feb04',
           '16-18Feb04',
-          '25-26Feb04']
+          '25Feb04']
 
 
 legend_loc=[0.3,0.1,0.2,0.8]
@@ -116,8 +120,8 @@ ax[1].legend([h1,h2,h3,h4,h5,h6,h7],
 
 plt.subplots_adjust(wspace=0.15,hspace=0.15)
 
-#plt.show()
+plt.show()
 
-fname='/home/raul/Desktop/za_cdf.png'
-plt.savefig(fname, dpi=300, format='png',papertype='letter',
-            bbox_inches='tight')
+#fname='/home/raul/Desktop/za_cdf.png'
+#plt.savefig(fname, dpi=300, format='png',papertype='letter',
+#            bbox_inches='tight')

@@ -482,12 +482,15 @@ def get_dbz_freq(arrays, percentile=None):
     narrays = arrays.shape[0]
     X = pandas2stack(arrays)
     Z = X[~np.isnan(X)].flatten()
-    thres = np.percentile(Z, percentile)
-
     
     ' gets cummulative distribution of Z '
-    freqz,binsz=np.histogram(Z,bins=np.arange(-15,50),density=True)    
+    freqz, binsz = np.histogram(Z,
+                                bins=np.arange(-15,50),
+                                density=True)    
     distrz = np.cumsum(freqz)    
+
+    ''' gets percentile '''
+    thres = np.percentile(Z, percentile)
     
     a = arrays.iloc[[0]].values[0]
     COND = np.zeros(a.shape)
@@ -499,7 +502,7 @@ def get_dbz_freq(arrays, percentile=None):
         cond = (a >= thres).astype(int)
         COND = np.dstack((COND, cond))
 
-    mean, _ = get_mean(arrays, name='ZA')
+#    mean, _ = get_mean(arrays, name='ZA')
     method = 2
     if method == 1:
         csum = np.sum(COND, axis=2),
@@ -507,15 +510,17 @@ def get_dbz_freq(arrays, percentile=None):
     elif method == 2:
         csum = np.sum(COND, axis=2)
 
-        ''' remove isolated grid points  '''
+        ''' QC: remove isolated grid points along sweep edge '''
         summax = int(np.nanmax(csum))
         hist, bins = np.histogram(csum, bins=range(summax+2))
         idx = np.where(hist == 1)[0]
         if idx.size > 0:
             for i in idx:
                 csum[csum == i] = np.nan
-
-        freq = (csum / np.nanmax(csum)) * 100.
+        
+        ''' normalized frequency '''
+        narrays = np.nanmax(csum)
+        freq = (csum / narrays) * 100.
 
     ''' removes missing obs '''
     freq[freq == 0] = np.nan

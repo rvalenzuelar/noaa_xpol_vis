@@ -36,7 +36,7 @@ from rv_utilities import add_colorbar
 class process:
 
 
-    def __init__(self,case=[]):
+    def __init__(self,case=[],params=None):
 
         self.case = case
 
@@ -51,12 +51,14 @@ class process:
         from rhis and insert after processing making
         rhis df
         '''
-        if len(case)==7:
-            case.remove(12) 
-            rhi_df = make_dataframe(mode='rhi',case=case)
-            case.insert(4,12)
-        else:
-            rhi_df = make_dataframe(mode='rhi',case=case)
+#        if len(case)==7:
+#            case.remove(12) 
+#            rhi_df = make_dataframe(mode='rhi',case=case)
+#            case.insert(4,12)
+#        else:
+#            rhi_df = make_dataframe(mode='rhi',case=case)
+        
+        rhi_df = make_dataframe(mode='rhi',case=case)
         ppi_df = make_dataframe(mode='ppi',case=case)
 
         years = []
@@ -65,10 +67,8 @@ class process:
                 years.append(2003)
                 
             if c in [11,12,13,14] and 2004 not in years:
-                years.append(2004)
-                
-        params = dict(wdir_surf=125,wdir_wprof=170,
-                      rain_czd=0.25,nhours=2)                
+                years.append(2004)               
+              
         tta_dates = get_tta_dates(years, params)
 
         self.process(rhi_df, tta_dates, mode='rhi')
@@ -390,8 +390,8 @@ class process:
             pass   
    
    
-    def plot_dist(self,ax=None,mode=None,tta=True,show=False,
-                  colores=None):
+    def plot_dist(self,ax=None,mode=None,tta=True,
+                  show=False, color=None):
 
 
         if tta is True:
@@ -403,6 +403,8 @@ class process:
                 array = self.ppi_tta_distrz['csum']
                 bins = self.ppi_tta_distrz['bins']
                 thres = self.ppi_tta_thres
+            ha = 'right'
+            va = 'top' 
         else:
             if mode == 'rhi':
                 array = self.rhi_ntta_distrz['csum']
@@ -412,22 +414,17 @@ class process:
                 array = self.ppi_ntta_distrz['csum']
                 bins = self.ppi_ntta_distrz['bins']
                 thres = self.ppi_ntta_thres
-
+            ha = 'left'
+            va = 'bottom'
+            
         if ax is None:
             fig,ax = plt.subplots()
-        
-        if colores:
-            color1=colores
-            color2=colores
-        else:
-            color1='b'
-            color2='r'
             
-        h, = ax.plot(bins[:-1],array,lw=3,color=color1,
+        h, = ax.plot(bins[:-1],array,lw=3,color=color,
                      label='line',alpha=1)
-        ax.axvline(x=thres-1,lw=2,color=color2,alpha=0.5)
-#        ax.axvline(x=0,lw=2,color='k',linestyle=':')
-#        ax.axhline(y=0.5,lw=2,color='k',linestyle=':')
+        ax.axvline(x=thres,lw=2,color=color,alpha=0.5)
+        ax.text(thres,0.1,'{:2.1f}'.format(thres),ha=ha,va=va,
+                color=color,fontsize=12,weight='bold')
         ax.set_xlim([-20,50])
         ax.set_ylim([0,1])        
         

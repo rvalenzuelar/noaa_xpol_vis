@@ -22,10 +22,14 @@ mpl.rcParams['font.size']=15
     then create them
 '''
 
+params = dict(wdir_surf=130,wdir_wprof=170,
+              rain_czd=0.25,nhours=2)
+
 try:
     xall
 except NameError:
-    xall=xta.process(case=[8, 9, 10, 11, 12, 13, 14])
+    ' doesnt have case 12 to avoid discontinuity'
+    xall=xta.process(case=[8, 9, 10, 11, 13, 14])
 
 scale=1.2
 fig = plt.figure(figsize=(7.5*scale, 11*scale))
@@ -165,8 +169,8 @@ ntta_arrows={'arrow1':{'c0':(130,115),'az':335},
             'arrow5':{'c0':(35,120),'az':10},
             'arrow6':{'c0':(15,130),'az':10},
             }
-scale = 4.1 # use for output figure
-#scale = 1.0 # use for iPython figure
+#scale = 4.1 # use for output figure
+scale = 1.0 # use for iPython figure
 length = 30
 arrows=[tta_arrows,ntta_arrows]
 axes = [axes[0],axes[1]]
@@ -204,11 +208,9 @@ ax2.annotate("",
              )
 
 
-
-
 #plt.show()
 
-fname='/home/raul/Desktop/xpol_composite.png'
+fname='/home/raul/Desktop/fig_xpol_composite.png'
 plt.savefig(fname, dpi=300, format='png',papertype='letter',
             bbox_inches='tight')
 

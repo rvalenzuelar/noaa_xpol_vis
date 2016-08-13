@@ -21,25 +21,29 @@ mpl.rcParams['font.size']=15
     if instances do not exist in iPython namespace
     then create them
 '''
+
+params = dict(wdir_surf=130,wdir_wprof=170,
+              rain_czd=0.25,nhours=2)  
+
 try:
     x08
 except NameError:
-    x08=xta.process(case=[8])
+    x08=xta.process(case=[8],params=params)
 
 try:
     x09
 except NameError:
-    x09=xta.process(case=[9])
+    x09=xta.process(case=[9],params=params)
     
 try:
     x12
 except NameError:
-    x12=xta.process(case=[12])
+    x12=xta.process(case=[12],params=params)
 
 try:
     x13
 except NameError:
-    x13=xta.process(case=[13])
+    x13=xta.process(case=[13],params=params)
 
 def main():
 
@@ -160,8 +164,8 @@ def main():
              'arrow2':{'c0':(80,78),'az':330},
              'arrow3':{'c0':(20,95),'az':355},
             }              
-    scale = 4.1 # use for output figure
-#    scale = 1.0 # use for iPython figure
+#    scale = 4.1 # use for output figure
+    scale = 1.0 # use for iPython figure
     length = 30
     arrows=(arrows1,arrows2,arrows3,arrows4)
     axes = (axes[0],axes[2],axes[4],axes[6])
@@ -185,10 +189,10 @@ def main():
 
 main()
 
-#plt.show()
+plt.show()
 
-fname='/home/raul/Desktop/tta_ppi_singlestorm.png'
-plt.savefig(fname, dpi=300, format='png',papertype='letter',
-            bbox_inches='tight')
+#fname='/home/raul/Desktop/tta_ppi_singlestorm.png'
+#plt.savefig(fname, dpi=300, format='png',papertype='letter',
+#            bbox_inches='tight')
 
 

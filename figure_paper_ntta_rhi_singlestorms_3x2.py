@@ -126,8 +126,8 @@ for ax in axes:
             weight='bold',transform=ax.transAxes,
             ha='left')
 
-plt.show()
+#plt.show()
 
-#fname='/home/raul/Desktop/ntta_rhi_singlestorm.png'
-#plt.savefig(fname, dpi=300, format='png',papertype='letter',
-#            bbox_inches='tight')
+fname='/home/raul/Desktop/ntta_rhi_singlestorm.png'
+plt.savefig(fname, dpi=300, format='png',papertype='letter',
+            bbox_inches='tight')
