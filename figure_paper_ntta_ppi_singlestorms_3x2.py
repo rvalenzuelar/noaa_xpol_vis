@@ -19,20 +19,22 @@ mpl.rcParams['font.size']=15
     if instances do not exist in iPython namespace
     then create them
 '''
+params = dict(wdir_surf=130,wdir_wprof=170,
+              rain_czd=0.25,nhours=2)
 try:
     x08
 except NameError:
-    x08=xta.process(case=[8])
+    x08=xta.process(case=[8],params=params)
 
 try:
     x10
 except NameError:
-    x10=xta.process(case=[10])
+    x10=xta.process(case=[10],params=params)
     
 try:
     x14
 except NameError:
-    x14=xta.process(case=[14])
+    x14=xta.process(case=[14],params=params)
 
 def main():
 
@@ -121,7 +123,7 @@ def main():
     
     ''' add axis id '''
     for ax in axes:
-        ax.text(0.05,0.9,ax.get_gid(),size=14,
+        ax.text(0.01,0.93,ax.get_gid(),size=14,
                 weight='bold',transform=ax.transAxes)
 
     ''' add PPI arrows '''
@@ -135,12 +137,12 @@ def main():
              'arrow3':{'c0':(30,130),'az':10},
             }
     arrows2={'arrow1':{'c0':(130,115),'az':350},
-             'arrow2':{'c0':(80,125),'az':15},
+             'arrow2':{'c0':(80,130),'az':10},
              'arrow3':{'c0':(30,160),'az':25},
             }
     arrows3={'arrow1':{'c0':(130,115),'az':330},
-             'arrow2':{'c0':(80,100),'az':330},
-             'arrow3':{'c0':(30,85),'az':350},
+             'arrow2':{'c0':(80,100),'az':340},
+             'arrow3':{'c0':(30,90),'az':345},
             }
       
     scale = 4.1 # use for output figure
@@ -172,7 +174,7 @@ main()
 
 #plt.show()
 
-fname='/home/raul/Desktop/ntta_ppi_singlestorm.png'
+fname='/home/raul/Desktop/fig_ntta_ppi_singlestorm.png'
 plt.savefig(fname, dpi=300, format='png',papertype='letter',
             bbox_inches='tight')
 

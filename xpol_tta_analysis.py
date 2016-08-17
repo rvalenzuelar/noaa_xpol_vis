@@ -47,18 +47,18 @@ class process:
         self.cbar = None
         
         ''' 
-        if process all the cases then remove case 12 
-        from rhis and insert after processing making
-        rhis df
+        If process all the cases then remove case 12 
+        (02Feb04) from RHIs. This is done to remove 
+        discontiuity in 7-storm composite RHI
         '''
-#        if len(case)==7:
-#            case.remove(12) 
-#            rhi_df = make_dataframe(mode='rhi',case=case)
-#            case.insert(4,12)
-#        else:
-#            rhi_df = make_dataframe(mode='rhi',case=case)
+        if (12 in case) and (len(case)==7):
+            case.remove(12) 
+            rhi_df = make_dataframe(mode='rhi',case=case)
+            ''' insert again to process PPIs'''
+            case.insert(4,12)
+        else:
+            rhi_df = make_dataframe(mode='rhi',case=case)
         
-        rhi_df = make_dataframe(mode='rhi',case=case)
         ppi_df = make_dataframe(mode='ppi',case=case)
 
         years = []

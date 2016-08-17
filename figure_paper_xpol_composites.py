@@ -28,8 +28,10 @@ params = dict(wdir_surf=130,wdir_wprof=170,
 try:
     xall
 except NameError:
-    ' doesnt have case 12 to avoid discontinuity'
-    xall=xta.process(case=[8, 9, 10, 11, 13, 14])
+    ''' 02Feb04 (12) is excluded for RHIs only internally in
+        the process method
+    ''' 
+    xall=xta.process(case=[8, 9, 10, 11, 12, 13, 14])
 
 scale=1.2
 fig = plt.figure(figsize=(7.5*scale, 11*scale))
@@ -158,19 +160,19 @@ def arrow_end(st_co,r,az):
 tta_arrows={'arrow1':{'c0':(140,115),'az':300},
             'arrow2':{'c0':(120,98),'az':325},
             'arrow3':{'c0':(90,93),'az':340},
-            'arrow4':{'c0':(60,98),'az':350},
-            'arrow5':{'c0':(35,105),'az':355},
-            'arrow6':{'c0':(15,115),'az':5},
+            'arrow4':{'c0':(60,98),'az':345},
+            'arrow5':{'c0':(35,105),'az':350},
+            'arrow6':{'c0':(15,115),'az':355},
             }
 ntta_arrows={'arrow1':{'c0':(130,115),'az':335},
-            'arrow2':{'c0':(105,110),'az':350},
-            'arrow3':{'c0':(80,110),'az':355},
-            'arrow4':{'c0':(55,115),'az':10},
-            'arrow5':{'c0':(35,120),'az':10},
-            'arrow6':{'c0':(15,130),'az':10},
+            'arrow2':{'c0':(105,112),'az':350},
+            'arrow3':{'c0':(80,115),'az':0},
+            'arrow4':{'c0':(55,123),'az':5},
+            'arrow5':{'c0':(35,130),'az':5},
+            'arrow6':{'c0':(15,140),'az':10},
             }
-#scale = 4.1 # use for output figure
-scale = 1.0 # use for iPython figure
+scale = 4.1 # use for output figure
+#scale = 1.0 # use for iPython figure
 length = 30
 arrows=[tta_arrows,ntta_arrows]
 axes = [axes[0],axes[1]]
@@ -183,15 +185,38 @@ for ax,arrow in zip(axes,arrows):
                     xytext     = c0,
                     xycoords   = 'axes pixels',
                     textcoords = 'axes pixels',
-                    arrowprops = dict(
-                                      shrinkA=6,
+                    zorder     = 1,
+                    arrowprops = dict(shrinkA=6,
                                       shrinkB=6,
                                       fc='w',
                                       ec='k',
-                                      lw=1),
-                    zorder=1,
-                    )
+                                      lw=1))
 
+''' single arrows '''
+c0 = tuple(v*scale for v in (145,34))
+axes[0].annotate("",
+            xy         = arrow_end(c0,length*scale,355),
+            xytext     = c0,
+            xycoords   = 'axes pixels',
+            textcoords = 'axes pixels',
+            zorder     = 1,
+            arrowprops = dict(shrinkA=6,
+                              shrinkB=6,
+                              fc='w',
+                              ec='k',
+                              lw=1))
+c0 = tuple(v*scale for v in (140,67))
+axes[1].annotate("",
+            xy         = arrow_end(c0,length*scale,0),
+            xytext     = c0,
+            xycoords   = 'axes pixels',
+            textcoords = 'axes pixels',
+            zorder     = 1,
+            arrowprops = dict(shrinkA=6,
+                              shrinkB=6,
+                              fc='w',
+                              ec='k',
+                              lw=1))
 
 ''' add RHI arrow '''
 ax2.annotate("",
@@ -199,14 +224,10 @@ ax2.annotate("",
              xytext = (25*scale,3*scale),
              xycoords='axes pixels', 
              textcoords='axes pixels',
-             arrowprops=dict(
-                             shrinkA=5,
+             arrowprops=dict(shrinkA=5,
                              shrinkB=5,
                              fc="w", ec="k",
-                             connectionstyle="arc3,rad=-0.1",
-                             )
-             )
-
+                             connectionstyle="arc3,rad=-0.1"))
 
 #plt.show()
 

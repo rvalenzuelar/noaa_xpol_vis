@@ -153,7 +153,7 @@ def main():
     axes = (ax0, ax1, ax2, ax3, ax4,
             ax5, ax6, ax7, ax8, ax9)
     for ax in axes:
-        ax.text(0.05,0.9,ax.get_gid(),size=14,
+        ax.text(0.01,0.93,ax.get_gid(),size=14,
                 weight='bold',transform=ax.transAxes)
     
     ''' add PPI arrows '''
