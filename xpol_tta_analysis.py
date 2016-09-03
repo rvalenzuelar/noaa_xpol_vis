@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib.cm as cm
 from edit_in_polar_kdtree import edit_polar
-from tta_analysis import tta_analysis
+from tta_analysis2 import tta_analysis
 from rv_utilities import add_colorbar
 #from rv_utilities import add_subplot_axes
 
@@ -395,16 +395,28 @@ class process:
 
 
         if tta is True:
+
             if mode == 'rhi':
-                array = self.rhi_tta_distrz['csum']
-                bins = self.rhi_tta_distrz['bins']
-                thres = self.rhi_tta_thres
+                if self.rhi_tta_distrz is None:
+                    bins = self.rhi_ntta_distrz['bins']
+                    array = np.zeros(bins[:-1].shape)
+                    thres = None
+                else:
+                    array = self.rhi_tta_distrz['csum']
+                    bins = self.rhi_tta_distrz['bins']
+                    thres = np.round(self.rhi_tta_thres,1)
             elif mode == 'ppi':
-                array = self.ppi_tta_distrz['csum']
-                bins = self.ppi_tta_distrz['bins']
-                thres = self.ppi_tta_thres
-            ha = 'right'
-            va = 'top' 
+                if self.rhi_tta_distrz is None:                
+                    bins = self.ppi_ntta_distrz['bins']
+                    array = np.zeros(bins[:-1].shape)+np.nan
+                    thres = None                
+                else:
+                    array = self.ppi_tta_distrz['csum']
+                    bins = self.ppi_tta_distrz['bins']
+                    thres = np.round(self.ppi_tta_thres,1)
+#            ha = 'right'
+#            va = 'top' 
+            vpos=0.3
         else:
             if mode == 'rhi':
                 array = self.rhi_ntta_distrz['csum']
@@ -414,17 +426,33 @@ class process:
                 array = self.ppi_ntta_distrz['csum']
                 bins = self.ppi_ntta_distrz['bins']
                 thres = self.ppi_ntta_thres
-            ha = 'left'
-            va = 'bottom'
-            
+#            ha = 'left'
+#            va = 'bottom'
+            vpos=0.2
         if ax is None:
             fig,ax = plt.subplots()
             
         h, = ax.plot(bins[:-1],array,lw=3,color=color,
                      label='line',alpha=1)
-        ax.axvline(x=thres,lw=2,color=color,alpha=0.5)
-        ax.text(thres,0.1,'{:2.1f}'.format(thres),ha=ha,va=va,
-                color=color,fontsize=12,weight='bold')
+        if thres is not None:
+            ax.axvline(x=thres,lw=2,color=color,alpha=0.5)
+#            ax.text(thres,0.1,'{:2.1f}'.format(thres),ha=ha,va=va,
+#                    color=color,fontsize=12,weight='bold')
+            ax.annotate('{:2.1f}'.format(thres),
+                    xy         = (thres-0.5, vpos),
+                    xytext     = (38, vpos),
+                    xycoords   = 'data',
+                    textcoords = 'data',
+                    zorder     = 10000,
+                    color      = color,
+                    weight     = 'bold',
+                    fontsize   = 12,
+                    arrowprops=dict(arrowstyle = '-|>',
+                                    ec         = 'k',
+                                    fc         = 'k',
+                                    )
+                    )            
+            
         ax.set_xlim([-20,50])
         ax.set_ylim([0,1])        
         
