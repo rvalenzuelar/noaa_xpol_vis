@@ -26,8 +26,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib.cm as cm
+import tta_analysis3 as ta3
 from edit_in_polar_kdtree import edit_polar
-from tta_analysis2 import tta_analysis
 from rv_utilities import add_colorbar
 #from rv_utilities import add_subplot_axes
 
@@ -633,16 +633,18 @@ def get_tta_dates(years,params):
         
         if 2003 in years:
             print('...getting 2003 tta dates')
-            tta = tta_analysis(2003)
-            tta.start_df(**params)
-            tta_dates03 = tta.tta_dates.tolist()
-        
+            out1 = ta3.preprocess(years=[2003], layer=[0, 500])
+            out2 = ta3.analysis(out1, params)
+            tta = out2['precip']['tta']
+            tta_dates03 = list(tta[tta].index.to_datetime())
+
         if 2004 in years:
             print('...getting 2004 tta dates')
-            tta = tta_analysis(2004)
-            tta.start_df(**params)
-            tta_dates04 = tta.tta_dates.tolist()
-        
+            out1 = ta3.preprocess(years=[2004], layer=[0, 500])
+            out2 = ta3.analysis(out1, params)
+            tta = out2['precip']['tta']
+            tta_dates04 = list(tta[tta].index.to_datetime())
+
         return tta_dates03 + tta_dates04
 
 
