@@ -18,20 +18,24 @@ mpl.rcParams['font.size']=15
     if instances do not exist in iPython namespace
     then create them
 '''
+params = dict(wdir_thres=150,
+              rain_czd=0.25,
+              nhours=2
+              )
 try:
     x08
 except NameError:
-    x08=xta.process(case=[8])
+    x08=xta.process(case=[8],params=params)
 
 try:
     x10
 except NameError:
-    x10=xta.process(case=[10])
+    x10=xta.process(case=[10],params=params)
     
 try:
     x14
 except NameError:
-    x14=xta.process(case=[14])
+    x14=xta.process(case=[14],params=params)
 
 scale=1.6
 fig = plt.figure(figsize=(8*scale, 3*scale))
@@ -110,24 +114,24 @@ ax5.text(1,0.5,'25Feb04',fontsize=15,va='center',
 cbVr = AA.Axes(fig,[0.15, -0.13, 0.34, 0.75])
 cbZ  = AA.Axes(fig,[0.51, -0.13, 0.34, 0.75])
 add_colorbar(cbVr,hvr,label='[m/s]',loc='bottom',
-             ticks=range(0,32,2),
-             ticklabels=range(0,34,4))
+             ticks=range(0, 32, 2),
+             ticklabels=range(0, 34, 4))
 add_colorbar(cbZ,hz,label='[%]',loc='bottom',
-             ticks=range(20,110,10),
-             ticklabels=range(20,120,20))
+             ticks=range(20, 110, 10),
+             ticklabels=range(20, 120, 20))
 fig.add_axes(cbVr)
 fig.add_axes(cbZ)
-cbVr.remove() # leave only colorbar
-cbZ.remove() # leave only colorbar
+cbVr.remove()  # leave only colorbar
+cbZ.remove()  # leave only colorbar
 
 ''' add axis id '''
 for ax in axes:
-    ax.text(0.9,0.85,ax.get_gid(),size=14,
-            weight='bold',transform=ax.transAxes,
+    ax.text(0.9, 0.85, ax.get_gid(), size=14,
+            weight='bold', transform=ax.transAxes,
             ha='left')
 
-#plt.show()
+plt.show()
 
-fname='/home/raul/Desktop/ntta_rhi_singlestorm.png'
-plt.savefig(fname, dpi=300, format='png',papertype='letter',
-            bbox_inches='tight')
+# fname='/Users/raulvalenzuela/Documents/ntta_rhi_singlestorm.png'
+# plt.savefig(fname, dpi=300, format='png',papertype='letter',
+#             bbox_inches='tight')

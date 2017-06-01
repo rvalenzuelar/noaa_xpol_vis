@@ -22,8 +22,13 @@ mpl.rcParams['font.size']=15
     then create them
 '''
 
-params = dict(wdir_surf=130,wdir_wprof=170,
-              rain_czd=0.25,nhours=2)
+# params = dict(wdir_surf=130,wdir_wprof=170,
+#               rain_czd=0.25,nhours=2)
+
+params = dict(wdir_thres=150,
+              rain_czd=0.25,
+              nhours=2
+              )
 
 try:
     xall
@@ -31,7 +36,7 @@ except NameError:
     ''' 02Feb04 (12) is excluded for RHIs only internally in
         the process method
     ''' 
-    xall=xta.process(case=[8, 9, 10, 11, 12, 13, 14])
+    xall=xta.process(case=[8, 9, 10, 11, 12, 13, 14], params=params)
 
 scale=1.2
 fig = plt.figure(figsize=(7.5*scale, 11*scale))
@@ -229,9 +234,9 @@ ax2.annotate("",
                              fc="w", ec="k",
                              connectionstyle="arc3,rad=-0.1"))
 
-#plt.show()
+plt.show()
 
-fname='/home/raul/Desktop/fig_xpol_composite.png'
-plt.savefig(fname, dpi=300, format='png',papertype='letter',
-            bbox_inches='tight')
+# fname='/home/raul/Desktop/fig_xpol_composite.png'
+# plt.savefig(fname, dpi=300, format='png',papertype='letter',
+#             bbox_inches='tight')
 

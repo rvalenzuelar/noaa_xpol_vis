@@ -22,8 +22,10 @@ mpl.rcParams['font.size']=15
     then create them
 '''
 
-params = dict(wdir_surf=130,wdir_wprof=170,
-              rain_czd=0.25,nhours=2)  
+params = dict(wdir_thres=150,
+              rain_czd=0.25,
+              nhours=2
+              )
 
 try:
     x08

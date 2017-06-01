@@ -39,13 +39,14 @@ class process:
     def __init__(self,case=[],params=None):
 
         self.case = case
-
         self.rhi_tta = None
         self.rhi_ntta = None
         self.ppi_tta = None
         self.ppi_ntta = None
         self.cbar = None
-        
+        self.rhi_dates = None
+        self.ppi_dates = None
+
         ''' 
         If process all the cases then remove case 12 
         (02Feb04) from RHIs. This is done to remove 
@@ -60,6 +61,9 @@ class process:
             rhi_df = make_dataframe(mode='rhi',case=case)
         
         ppi_df = make_dataframe(mode='ppi',case=case)
+
+        self.rhi_dates = rhi_df.index
+        self.ppi_dates = ppi_df.index
 
         years = []
         for c in case:
@@ -86,7 +90,7 @@ class process:
 
         TTAdf = None
         NTTAdf = None
-        for date_grp,_ in xpol_groups.groups.iteritems():
+        for date_grp, _ in xpol_groups.groups.iteritems():
 
             ''' some dates where created by the pandas
                 grouping method to fill time gaps, so 
@@ -94,6 +98,8 @@ class process:
             '''
             try:
                 grpvalue = xpol_groups.get_group(date_grp)
+                # print grpvalue
+
                 if date_grp in tta_dates:
                     if TTAdf is None:
                         TTAdf = grpvalue
@@ -106,6 +112,7 @@ class process:
                         NTTAdf = NTTAdf.append(grpvalue)
             except KeyError:
                 pass
+
 
         if mode == 'rhi':
             self.rhi_tta = TTAdf
@@ -235,30 +242,33 @@ class process:
         if mode == 'ppi' and qc is True and array is not None:
             qcs = []            
             o = (116,118)
-            qcs.append(dict(origin=o,az=57,n=10,target='remove_line'))
-            qcs.append(dict(origin=o,az=232,n=10,target='remove_line'))
-            qcs.append(dict(origin=o,rang=115,n=30,target='remove_ring'))
+            qcs.append(dict(origin=o, az=57, n=10,
+                            target='remove_line'))
+            qcs.append(dict(origin=o, az=232, n=10,
+                            target='remove_line'))
+            qcs.append(dict(origin=o, rang=115, n=30,
+                            target='remove_ring'))
             qc = edit_polar(array,qcs)
             array = qc.get_edited()
         elif mode == 'rhi' and qc is True and array is not None:
             qcs = []
-            o=(0,286)
-            n=200
-            tar1='remove_ring'
-            tar2='remove_line'
-            az=283
-            qcs.append(dict(origin=o,rang=210,n=n,target=tar1))
-            qcs.append(dict(origin=o,rang=220,n=n,target=tar1))
-            qcs.append(dict(origin=o,rang=230,n=n,target=tar1))
-            qcs.append(dict(origin=o,rang=240,n=n,target=tar1))
-            qcs.append(dict(origin=o,rang=250,n=n,target=tar1))
-            qcs.append(dict(origin=o,rang=260,n=n,target=tar1))
-            qcs.append(dict(origin=o,rang=270,n=n,target=tar1))
-            qcs.append(dict(origin=(0,305),az=az,n=10,target=tar2))
-            qcs.append(dict(origin=(0,325),az=az,n=10,target=tar2))
-            qcs.append(dict(origin=(0,345),az=az,n=10,target=tar2))
-            qcs.append(dict(origin=(0,365),az=az,n=10,target=tar2))
-            qcs.append(dict(origin=(0,385),az=az,n=10,target=tar2))
+            o = (0, 286)
+            n1, n2 = [150, 10]
+            tar1 = 'remove_ring'
+            tar2 = 'remove_line'
+            az = 283
+            qcs.append(dict(origin=o, rang=210, n=n1, target=tar1))
+            qcs.append(dict(origin=o, rang=220, n=n1, target=tar1))
+            qcs.append(dict(origin=o, rang=230, n=n1, target=tar1))
+            qcs.append(dict(origin=o, rang=240, n=n1, target=tar1))
+            qcs.append(dict(origin=o, rang=250, n=n1, target=tar1))
+            qcs.append(dict(origin=o, rang=260, n=n1, target=tar1))
+            qcs.append(dict(origin=o, rang=270, n=n1, target=tar1))
+            qcs.append(dict(origin=(0,305), az=az, n=n2, target=tar2))
+            qcs.append(dict(origin=(0,325), az=az, n=n2, target=tar2))
+            qcs.append(dict(origin=(0,345), az=az, n=n2, target=tar2))
+            qcs.append(dict(origin=(0,365), az=az, n=n2, target=tar2))
+            qcs.append(dict(origin=(0,385), az=az, n=n2, target=tar2))
 
             qc = edit_polar(array,qcs)
             array = qc.get_edited()
@@ -313,7 +323,8 @@ class process:
                 ax.pcolormesh(X,Y,dtmm,vmin=0,vmax=1000,cmap='gray_r')
             else:
                 X,Y = np.meshgrid(lons,lats)
-                hdtm = m.pcolormesh(X,Y,dtmm,vmin=0,vmax=1000,cmap='gray_r',
+                hdtm = m.pcolormesh(X,Y,dtmm,vmin=0,vmax=1000,
+                                    cmap='gray_r',
                              latlon=True) 
                 m.drawcoastlines(linewidth=1.5)
 
@@ -481,7 +492,13 @@ class process:
                   cbar=dict(loc='right'))
 
         plt.show()
-        
+
+
+    def get_axis(self,axisname,scanmode):
+
+        case = self.case[0]
+        axdata = xpol.get_axis(axisname, case, scanmode)
+        return axdata
 
 def get_colormap(mode=None,target=None):
     

@@ -14,8 +14,13 @@ rcParams['ytick.labelsize'] = 15
 rcParams['axes.labelsize'] = 15
 
 
-params = dict(wdir_surf=130,wdir_wprof=170,
-              rain_czd=0.25,nhours=2)
+# params = dict(wdir_surf=130,wdir_wprof=170,
+#               rain_czd=0.25,nhours=2)
+
+params = dict(wdir_thres=150,
+              rain_czd=0.25,
+              nhours=2
+              )
 
 try:
     x08
@@ -128,9 +133,9 @@ for mode in modes:
     plt.subplots_adjust(wspace=0.1,hspace=0.15)
     
     
-    fname='/home/raul/Desktop/fig_za_cdf_{}.png'.format(mode)
-    plt.savefig(fname, dpi=300, format='png',papertype='letter',
-                bbox_inches='tight')
+    # fname='/home/raul/Desktop/fig_za_cdf_{}.png'.format(mode)
+    # plt.savefig(fname, dpi=300, format='png',papertype='letter',
+    #             bbox_inches='tight')
 
 #plt.show()
 

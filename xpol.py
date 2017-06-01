@@ -402,6 +402,45 @@ def get_data(case, scanmode, angle, datadir=None, index=None):
     return df
 
 
+def get_axis(axisname, case, scanmode):
+
+    import os
+
+    try:
+        datadir = os.environ['XPOL_PATH']
+    except KeyError:
+        print('*** Need to provide datadir or export XPOL_PATH ***')
+
+    if scanmode in ['PPI','ppi']:
+        basestr = datadir + '/c{0}/PPI/elev{1}/'
+        basedir = [basestr.format(str(case).zfill(2),'005')]
+    elif scanmode in ['RHI','rhi']:
+        basestr = datadir + '/c{0}/RHI/az{1}/'
+        if case == 13:
+            ang1, ang2 = ['180', '360']
+            basedir = [basestr.format(str(case).zfill(2), ang1),
+                       basestr.format(str(case).zfill(2), ang2)]
+        elif case == 9:
+            basedir = [basestr.format(str(case).zfill(2), '180')]
+
+    if len(basedir) == 1:
+        cdf_files = glob(basedir[0] + '*.cdf')
+        data = Dataset(cdf_files[0], 'r')
+        return data.variables[axisname][:]
+    else:
+        if axisname in ['Z','z']:
+            cdf_files = glob(basedir[0] + '*.cdf')
+            data = Dataset(cdf_files[0], 'r')
+            return data.variables[axisname][:]
+        else:
+            cdf_files0 = glob(basedir[0] + '*.cdf')
+            cdf_files1 = glob(basedir[1] + '*.cdf')
+            data1 = Dataset(cdf_files0[0], 'r')
+            data2 = Dataset(cdf_files1[0], 'r')
+            ax1 = data1.variables[axisname][:]
+            ax2 = data2.variables[axisname][:]
+            return np.concatenate((ax1, ax2), axis=0)
+
 def parse_rawdate(start_date=None, start_time=None, datestring=None):
 
     if start_date is not None and start_time is not None:
@@ -530,9 +569,12 @@ def get_dbz_freq(arrays, percentile=None):
 
 
 def convert_to_common_grid(input_array):
-    ''' convert pandas rhis df with different
-    grid dimensions to a common grid to be
-    statistically processed '''
+
+    """
+    :param input_array: rhi array 
+    :return:  pandas df with common grid dimensions to be
+            statistically processed 
+    """
 
     if type(input_array) == pd.core.frame.DataFrame:
         newdf = input_array.copy()
