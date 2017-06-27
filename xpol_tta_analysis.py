@@ -46,6 +46,16 @@ class process:
         self.cbar = None
         self.rhi_dates = None
         self.ppi_dates = None
+        self.arraym_vr = None
+        self.arraym_z = None
+        self.X = None
+        self.Y = None
+        self.x = None
+        self.y = None
+        self.lons = None
+        self.lats = None
+        self.cvalues_z = None
+        self.cvalues_vr = None
 
         ''' 
         If process all the cases then remove case 12 
@@ -198,132 +208,159 @@ class process:
         import numpy.ma as ma
         import h5py
         from mpl_toolkits.basemap import Basemap
-        
-        if tta is True:
-            if mode == 'rhi' and target == 'z':
-                array = self.rhi_tta_z
-            elif mode == 'rhi' and target == 'vr':
-                array = self.rhi_tta_vr
-            elif mode == 'ppi' and target == 'z':
-                array = self.ppi_tta_z
-            elif mode == 'ppi' and target == 'vr':
-                array = self.ppi_tta_vr
+
+        if (self.arraym_z is None) or (self.arraym_vr) is None:
+            if tta is True:
+                if mode == 'rhi' and target == 'z':
+                    array = self.rhi_tta_z
+                elif mode == 'rhi' and target == 'vr':
+                    array = self.rhi_tta_vr
+                elif mode == 'ppi' and target == 'z':
+                    array = self.ppi_tta_z
+                elif mode == 'ppi' and target == 'vr':
+                    array = self.ppi_tta_vr
+            else:
+                if mode == 'rhi' and target == 'z':
+                    array = self.rhi_ntta_z
+                elif mode == 'rhi' and target == 'vr':
+                    array = self.rhi_ntta_vr
+                elif mode == 'ppi' and target == 'z':
+                    array = self.ppi_ntta_z
+                elif mode == 'ppi' and target == 'vr':
+                    array = self.ppi_ntta_vr
+
+            ''' set grid values '''
+            if mode == 'ppi':
+                x = np.arange(-58, 45.5, 0.5)
+                y = np.arange(-58, 33.5, 0.5)
+            elif mode == 'rhi':
+                x = np.arange(-40, 30.6, 0.14)  # for common grid
+                y = np.arange(0, 12.20, 0.20)
+
+            X,Y = np.meshgrid(x,y)
+
+            ''' set contour values '''
+            if target == 'z':
+                cvalues = np.arange(20,110,10)
+            elif target == 'vr':
+                if cvalues is None:
+                    if mode == 'ppi':
+                        cvalues = np.arange(-19,21,2)
+                    elif mode == 'rhi':
+                        cvalues = np.arange(0,32,2)
+            print 'QC:{}'.format(qc)
+            ''' make QC '''
+            if (mode == 'ppi') and (qc is True) and \
+                    (array is not None):
+                qcs = []
+                o = (116,118)
+                qcs.append(dict(origin=o, az=57, n=10,
+                                target='remove_line'))
+                qcs.append(dict(origin=o, az=232, n=10,
+                                target='remove_line'))
+                qcs.append(dict(origin=o, rang=115, n=30,
+                                target='remove_ring'))
+                qc = edit_polar(array,qcs)
+                array = qc.get_edited()
+            elif (mode == 'rhi') and (qc is True) and \
+                    (array is not None):
+                qcs = []
+                o = (0, 286)
+                n1, n2 = [150, 10]
+                tar1 = 'remove_ring'
+                tar2 = 'remove_line'
+                az = 283
+                qcs.append(dict(origin=o, rang=210, n=n1, target=tar1))
+                qcs.append(dict(origin=o, rang=220, n=n1, target=tar1))
+                qcs.append(dict(origin=o, rang=230, n=n1, target=tar1))
+                qcs.append(dict(origin=o, rang=240, n=n1, target=tar1))
+                qcs.append(dict(origin=o, rang=250, n=n1, target=tar1))
+                qcs.append(dict(origin=o, rang=260, n=n1, target=tar1))
+                qcs.append(dict(origin=o, rang=270, n=n1, target=tar1))
+                qcs.append(dict(origin=(0,305), az=az, n=n2, target=tar2))
+                qcs.append(dict(origin=(0,325), az=az, n=n2, target=tar2))
+                qcs.append(dict(origin=(0,345), az=az, n=n2, target=tar2))
+                qcs.append(dict(origin=(0,365), az=az, n=n2, target=tar2))
+                qcs.append(dict(origin=(0,385), az=az, n=n2, target=tar2))
+
+                qc = edit_polar(array,qcs)
+                array = qc.get_edited()
+
+            ''' set masked values '''
+            if array is None:
+                array = np.zeros((y.size,x.size))+np.nan
+            arraym = ma.masked_where(np.isnan(array),array)
+
+            ''' save arrays '''
+            self.x = x
+            self.y = y
+            self.X = X
+            self.Y = Y
+            if target == 'z':
+                self.arraym_z = arraym
+                self.cvalues_z = cvalues
+            elif target == 'vr':
+                self.arraym_vr = arraym
+                self.cvalues_vr = cvalues
         else:
-            if mode == 'rhi' and target == 'z':
-                array = self.rhi_ntta_z
-            elif mode == 'rhi' and target == 'vr':
-                array = self.rhi_ntta_vr
-            elif mode == 'ppi' and target == 'z':
-                array = self.ppi_ntta_z
-            elif mode == 'ppi' and target == 'vr':
-                array = self.ppi_ntta_vr
-            
-        ''' set grid values '''
-        if mode == 'ppi':
-            x = np.arange(-58, 45.5, 0.5)        
-            y = np.arange(-58, 33.5, 0.5)
-        elif mode == 'rhi':
-            x = np.arange(-40, 30.6 , 0.14)  # for common grid
-            y = np.arange(  0, 12.20, 0.20)        
-        
-        X,Y = np.meshgrid(x,y)
+            print '**** using arraym saved on instance ****'
+            if target == 'z':
+                arraym = self.arraym_z
+                cvalues = self.cvalues_z
+            elif target == 'vr':
+                arraym = self.arraym_vr
+                cvalues = self.cvalues_vr
+            x = self.x
+            y = self.y
+            X = self.X
+            Y = self.Y
 
-        ''' set contour values '''
-        if target == 'z':        
-            cvalues = np.arange(20,110,10)        
-        elif target == 'vr':
-            if cvalues is None:
-                if mode == 'ppi':
-                    cvalues = np.arange(-19,21,2)    
-                elif mode == 'rhi':
-                    cvalues = np.arange(0,32,2)
-
-        ''' make QC '''
-        if mode == 'ppi' and qc is True and array is not None:
-            qcs = []            
-            o = (116,118)
-            qcs.append(dict(origin=o, az=57, n=10,
-                            target='remove_line'))
-            qcs.append(dict(origin=o, az=232, n=10,
-                            target='remove_line'))
-            qcs.append(dict(origin=o, rang=115, n=30,
-                            target='remove_ring'))
-            qc = edit_polar(array,qcs)
-            array = qc.get_edited()
-        elif mode == 'rhi' and qc is True and array is not None:
-            qcs = []
-            o = (0, 286)
-            n1, n2 = [150, 10]
-            tar1 = 'remove_ring'
-            tar2 = 'remove_line'
-            az = 283
-            qcs.append(dict(origin=o, rang=210, n=n1, target=tar1))
-            qcs.append(dict(origin=o, rang=220, n=n1, target=tar1))
-            qcs.append(dict(origin=o, rang=230, n=n1, target=tar1))
-            qcs.append(dict(origin=o, rang=240, n=n1, target=tar1))
-            qcs.append(dict(origin=o, rang=250, n=n1, target=tar1))
-            qcs.append(dict(origin=o, rang=260, n=n1, target=tar1))
-            qcs.append(dict(origin=o, rang=270, n=n1, target=tar1))
-            qcs.append(dict(origin=(0,305), az=az, n=n2, target=tar2))
-            qcs.append(dict(origin=(0,325), az=az, n=n2, target=tar2))
-            qcs.append(dict(origin=(0,345), az=az, n=n2, target=tar2))
-            qcs.append(dict(origin=(0,365), az=az, n=n2, target=tar2))
-            qcs.append(dict(origin=(0,385), az=az, n=n2, target=tar2))
-
-            qc = edit_polar(array,qcs)
-            array = qc.get_edited()
-
-        ''' set masked values '''
-        if array is None:
-            array = np.zeros((y.size,x.size))+np.nan
-        arraym = ma.masked_where(np.isnan(array),array)
-            
-        
         ''' handle axis '''
         if ax is None:
                 fig,ax = plt.subplots()
                 self.fig = fig
         else:
             self.fig = None
+
         self.ax = ax
 
         ''' make map axis '''       
-        lats,lons = get_geocoords(y.size, x.size)
-        m = Basemap(projection='merc',
-                    llcrnrlat=lats.min(),
-                    urcrnrlat=lats.max(),
-                    llcrnrlon=lons.min(),
-                    urcrnrlon=lons.max(),
-                    resolution='h',
-                    ax=ax)
-      
+        lats, lons = get_geocoords(y.size, x.size)
+        if mode == 'ppi':
+            m = Basemap(projection='merc',
+                        llcrnrlat=lats.min(),
+                        urcrnrlat=lats.max(),
+                        llcrnrlon=lons.min(),
+                        urcrnrlon=lons.max(),
+                        resolution='h',
+                        ax=ax)
         
         ''' make plot '''
         cmap = get_colormap(mode=mode,target=target)
         if name == 'pcolor':        
-            p = ax.pcolormesh(x,y,arraym)
+            p = ax.pcolormesh(x, y, arraym)
         elif name =='contourf':
             if bmap is False:
-                p = ax.contourf(X,Y,arraym,cvalues,cmap=cmap)
+                p = ax.contourf(X, Y, arraym, cvalues, cmap=cmap)
             else:
                 X,Y = np.meshgrid(lons,lats)
-                p = m.contourf(X,Y,arraym,cvalues,cmap=cmap,
+                p = m.contourf(X, Y, arraym, cvalues, cmap=cmap,
                                latlon=True)
                 m.drawcoastlines(linewidth=1.5)
 
-
         ''' add terrain map '''
-        if mode == 'ppi' and terrain is True:
+        if (mode == 'ppi') and (terrain is True):
             f = h5py.File('obs_domain_elevation.h5','r')
             dtm = f['/dtm'].value
             f.close()
             dtmm = ma.masked_where(dtm <= -15,dtm)
             
             if bmap is False:
-                ax.pcolormesh(X,Y,dtmm,vmin=0,vmax=1000,cmap='gray_r')
+                ax.pcolormesh(X, Y, dtmm, vmin=0, vmax=1000,
+                              cmap='gray_r')
             else:
-                X,Y = np.meshgrid(lons,lats)
-                hdtm = m.pcolormesh(X,Y,dtmm,vmin=0,vmax=1000,
+                X, Y = np.meshgrid(lons, lats)
+                hdtm = m.pcolormesh(X, Y, dtmm, vmin=0, vmax=1000,
                                     cmap='gray_r',
                              latlon=True) 
                 m.drawcoastlines(linewidth=1.5)
@@ -348,21 +385,27 @@ class process:
             for n in range(1,len(xticklabs),2):
                 xticklabs[n].set_text('')
             hcbar.ax.xaxis.set_ticklabels(xticklabs)
-
             self.cbar = hcbar
 
         ''' terrain profile '''
         if mode == 'rhi':
-            add_terrain_prof(ax,self.case[0])
-
+            add_terrain_prof(ax, self.case[0])
 
         ''' configure plot '''
-        mapping = [m,38.505260,-123.229607]
-        make_pretty_plot(self,mode=mode, target=target, tta=tta,
-                              yticklabs=yticklabs, xticklabs=xticklabs,
-                              ticklabsize=ticklabsize, xlabel=xlabel,
-                              ylabel=ylabel, mapping=mapping,
-                         )  
+        if mode == 'ppi':
+            mapping = [m, 38.505260,-123.229607]
+            make_pretty_plot(self,mode=mode, target=target, tta=tta,
+                                  yticklabs=yticklabs, xticklabs=xticklabs,
+                                  ticklabsize=ticklabsize, xlabel=xlabel,
+                                  ylabel=ylabel, mapping=mapping,
+                             )
+        else:
+            pass
+            make_pretty_plot(self, mode=mode, target=target, tta=tta,
+                             yticklabs=yticklabs, xticklabs=xticklabs,
+                             ticklabsize=ticklabsize, xlabel=xlabel,
+                             ylabel=ylabel
+                             )
         
         ''' add blocked sector '''
         if mode == 'ppi' and target == 'z' and sector is not None:
@@ -562,25 +605,25 @@ def make_pretty_plot(self,mode=None,target=None,tta=True,
                 color=(0,0,0),weight='bold') 
         xpol.add_rings(ax, alpha=0.5, txtsize=txtsize, mapping=mapping)
         xpol.add_azimuths(ax, alpha=0.3, mapping=mapping)
-               
 
-        
     if mode == 'rhi':
-        ax.set_xlim([-40,40])            
-        ax.set_ylim([0,5]) 
+        ax.set_xlim([-40, 40])
+        ax.set_ylim([0, 5])
+        ax.set_yticks([1, 2, 3, 4])
+        ax.set_xticks(range(-30, 40, 10))
         if fig is not None:
-            fig.set_figheight(2.0) # in inches
+            fig.set_figheight(2.0)  # in inches
             fig.set_figwidth(8.0)
         if target == 'z':
             if tta is True:
-                thr = self.rhi_tta_thres    
+                thr = self.rhi_tta_thres
             else:
-                thr = self.rhi_ntta_thres    
+                thr = self.rhi_ntta_thres
             txt1 = dbztxt.format(thr)
-            ax.text(0.98,0.13,txt1,size=txtsize,
+            ax.text(0.98, 0.13, txt1,size=txtsize,
                     transform=ax.transAxes,ha='right',
-                    color=(0,0,0), weight='bold')            
-        elif target == 'vr':    
+                    color=(0,0,0), weight='bold')
+        elif target == 'vr':
             if tta is True and self.rhi_tta is not None:
                 cnt = self.rhi_tta.index.size
             elif tta is False:
@@ -592,14 +635,13 @@ def make_pretty_plot(self,mode=None,target=None,tta=True,
                     transform=ax.transAxes,ha='right',
                     color=(0,0,0), weight='bold')
 
-
         if yticklabs is False:
             ax.set_yticklabels([])
         else:
             if ylabel is True:
                 ax.set_ylabel('Altitude [km] MSL',
                               fontdict=dict(size=ticklabsize-1))
-            
+
         if xticklabs is False:
             ax.set_xticklabels([])
         else:
@@ -607,15 +649,19 @@ def make_pretty_plot(self,mode=None,target=None,tta=True,
                 ax.set_xlabel('Distance from the radar [km]',
                               fontdict=dict(size=ticklabsize-1))
 
-        xticks = ax.xaxis.get_major_ticks()
-        xticks[0].label1.set_visible(False)
-        xticks[-1].label1.set_visible(False)
-        ax.xaxis.set_tick_params(labelsize=ticklabsize)
-        
-        yticks = ax.yaxis.get_major_ticks()
-        yticks[0].label1.set_visible(False)
-        yticks[-1].label1.set_visible(False)
-        ax.yaxis.set_tick_params(labelsize=ticklabsize)
+        # xticks = ax.xaxis.get_major_ticks()
+        # xticks[0].label1.set_visible(False)
+        # xticks[-1].label1.set_visible(False)
+        ax.xaxis.set_ticks_position('both')
+        ax.xaxis.set_tick_params(labelsize=ticklabsize,
+                                 direction='in')
+
+        # yticks = ax.yaxis.get_major_ticks()
+        # yticks[0].label1.set_visible(False)
+        # yticks[-1].label1.set_visible(False)
+        ax.yaxis.set_ticks_position('both')
+        ax.yaxis.set_tick_params(labelsize=ticklabsize,
+                                 direction='in')
         
         
         
@@ -640,7 +686,8 @@ def add_terrain_prof(ax,case):
     
     x = np.arange(0.5,60.5,0.5)
     y = prof/1000.
-    ax.fill_between(x, 0, y,facecolor='gray')
+    ax.fill_between(x, 0, y,facecolor='gray',
+                    edgecolor='k')
     
 
 def get_tta_dates(years,params):

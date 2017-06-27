@@ -12,6 +12,7 @@ import mpl_toolkits.axisartist as AA
 import matplotlib as mpl
 from matplotlib.gridspec import GridSpecFromSubplotSpec as gssp
 from rv_utilities import add_colorbar
+
 mpl.rcParams['font.size']=15
 
 ''' 
@@ -25,24 +26,24 @@ params = dict(wdir_thres=150,
 try:
     x08
 except NameError:
-    x08=xta.process(case=[8],params=params)
+    x08=xta.process(case=[8], params=params)
 
 try:
     x10
 except NameError:
-    x10=xta.process(case=[10],params=params)
+    x10=xta.process(case=[9], params=params)
     
 try:
     x14
 except NameError:
-    x14=xta.process(case=[14],params=params)
+    x14=xta.process(case=[13], params=params)
 
-scale=1.6
-fig = plt.figure(figsize=(8*scale, 3*scale))
+scale = 1.6
+fig = plt.figure(figsize=(6*scale, 4*scale))
 
 gs0 = gridspec.GridSpec(1, 2,
-                        top=0.99, bottom=0.01,
-                        left=0.15, right=0.85,
+                        top=0.95, bottom=0.22,
+                        left=0.05, right=0.95,
                         wspace=0.05)
 
 gs00 = gssp(3, 1,
@@ -102,17 +103,19 @@ hz = x14.plot(ax=ax5,name='contourf',mode='rhi',target='z',
          tta=False)
 
 ''' add vertical date labels '''
-ax1.text(1,0.5,'12-14Jan03',fontsize=15,va='center',
+# dts = ['12-14Jan03', '15-16Feb03', '25Feb04']
+dts = ['12-14Jan03', '21-23Jan03', '16-18Feb04']
+ax1.text(1, 0.5, dts[0], fontsize=15,va='center',
          transform=ax1.transAxes,rotation=-90)
-ax3.text(1,0.5,'15-16Feb03',fontsize=15,va='center',
+ax3.text(1, 0.5, dts[1], fontsize=15,va='center',
          transform=ax3.transAxes,rotation=-90)
-ax5.text(1,0.5,'25Feb04',fontsize=15,va='center',
+ax5.text(1, 0.5, dts[2], fontsize=15,va='center',
          transform=ax5.transAxes,rotation=-90)
 
 ''' make floating axis colorbar for vr y z '''
 #                  [left, bott, wid, hgt]
-cbVr = AA.Axes(fig,[0.15, -0.13, 0.34, 0.75])
-cbZ  = AA.Axes(fig,[0.51, -0.13, 0.34, 0.75])
+cbVr = AA.Axes(fig,[0.05, 0.1, 0.43, 0.75])
+cbZ  = AA.Axes(fig,[0.52, 0.1, 0.43, 0.75])
 add_colorbar(cbVr,hvr,label='[m/s]',loc='bottom',
              ticks=range(0, 32, 2),
              ticklabels=range(0, 34, 4))
@@ -132,6 +135,6 @@ for ax in axes:
 
 plt.show()
 
-# fname='/Users/raulvalenzuela/Documents/ntta_rhi_singlestorm.png'
+# fname='/Users/raulvalenzuela/Desktop/ntta_rhi_singlestorm.png'
 # plt.savefig(fname, dpi=300, format='png',papertype='letter',
 #             bbox_inches='tight')

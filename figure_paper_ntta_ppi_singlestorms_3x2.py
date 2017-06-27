@@ -12,7 +12,8 @@ import mpl_toolkits.axisartist as AA
 import matplotlib as mpl
 import numpy as np
 from rv_utilities import add_colorbar
-mpl.rcParams['font.size']=15
+
+mpl.rcParams['font.size'] = 15
 
 
 ''' 
@@ -26,17 +27,17 @@ params = dict(wdir_thres=150,
 try:
     x08
 except NameError:
-    x08=xta.process(case=[8],params=params)
+    x08=xta.process(case=[8], params=params)
 
 try:
     x10
 except NameError:
-    x10=xta.process(case=[10],params=params)
+    x10=xta.process(case=[9], params=params)
     
 try:
     x14
 except NameError:
-    x14=xta.process(case=[14],params=params)
+    x14=xta.process(case=[13], params=params)
 
 def main():
 
@@ -105,11 +106,15 @@ def main():
     
     
     ''' add vertical date labels '''
-    ax1.text(1,0.6,'12-14Jan03',fontsize=15,
+
+    # dts = ['12-14Jan03', '15-16Feb03', '25Feb04']
+    dts = ['12-14Jan03', '21-23Jan03', '16-18Feb04']
+
+    ax1.text(1,0.6,dts[0], fontsize=15,
              transform=ax1.transAxes,rotation=-90)
-    ax3.text(1,0.6,'15-16Feb03',fontsize=15,
+    ax3.text(1,0.6,dts[1], fontsize=15,
              transform=ax3.transAxes,rotation=-90)
-    ax5.text(1,0.6,'25Feb04',fontsize=15,
+    ax5.text(1,0.6,dts[2], fontsize=15,
              transform=ax5.transAxes,rotation=-90)
     
     ''' make floating axis colorbar for terrain '''
@@ -129,14 +134,15 @@ def main():
                 weight='bold',transform=ax.transAxes)
 
     ''' add PPI arrows '''
-    def arrow_end(st_co,r,az):
-        en_co=[st_co[0],st_co[1]]
-        en_co[0]+=r*np.sin(np.radians(az))
-        en_co[1]+=r*np.cos(np.radians(az))
-        return (en_co[0],en_co[1])
+    def arrow_end(st_co, r, az):
+        en_co = [st_co[0],st_co[1]]
+        en_co[0] += r*np.sin(np.radians(az))
+        en_co[1] += r*np.cos(np.radians(az))
+        return (en_co[0], en_co[1])
+
     arrows1={'arrow1':{'c0':(130,115),'az':330},
-             'arrow2':{'c0':(80,112),'az':355},
-             'arrow3':{'c0':(30,130),'az':10},
+             'arrow2':{'c0':(80,118),'az':355},
+             'arrow3':{'c0':(30,150),'az':13},
             }
     arrows2={'arrow1':{'c0':(130,115),'az':350},
              'arrow2':{'c0':(80,130),'az':10},
@@ -146,11 +152,18 @@ def main():
              'arrow2':{'c0':(80,100),'az':340},
              'arrow3':{'c0':(30,90),'az':345},
             }
-      
+    arrows4={'arrow1':{'c0':(130,115),'az':320},
+             'arrow2':{'c0':(80,110),'az':345},
+             'arrow3':{'c0':(30,120),'az':1},
+            }
+    arrows5={'arrow1':{'c0':(130,120),'az':340},
+             'arrow2':{'c0':(80,112),'az':350},
+             'arrow3':{'c0':(28,128),'az':7},
+            }
     scale = 4.1 # use for output figure
 #    scale = 1.0 # use for iPython figure
     length = 30
-    arrows=(arrows1,arrows2,arrows3)
+    arrows=(arrows1,arrows4,arrows5)
     axes = (axes[0],axes[2],axes[4])
     for ax,arrow in zip(axes,arrows):
         for _,arr in arrow.iteritems():
@@ -176,7 +189,7 @@ main()
 
 plt.show()
 
-# fname='/home/raul/Desktop/fig_ntta_ppi_singlestorm.png'
-# plt.savefig(fname, dpi=300, format='png',papertype='letter',
-#             bbox_inches='tight')
+fname='/Users/raulvalenzuela/Desktop/fig_ntta_ppi_singlestorm_v2.png'
+plt.savefig(fname, dpi=300, format='png',papertype='letter',
+            bbox_inches='tight')
 

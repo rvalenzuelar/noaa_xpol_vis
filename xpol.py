@@ -422,6 +422,8 @@ def get_axis(axisname, case, scanmode):
                        basestr.format(str(case).zfill(2), ang2)]
         elif case == 9:
             basedir = [basestr.format(str(case).zfill(2), '180')]
+        elif case == 8:
+            basedir = [basestr.format(str(case).zfill(2), '180')]
 
     if len(basedir) == 1:
         cdf_files = glob(basedir[0] + '*.cdf')
