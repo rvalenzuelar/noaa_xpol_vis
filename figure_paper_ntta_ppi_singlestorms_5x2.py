@@ -80,124 +80,136 @@ def main():
 
     cvalues = range(-30, 34, 4)
     
-    ax0.text(0.95, 1.05, 'TTA',transform=ax0.transAxes,
-             fontsize=15,weight='bold')
+    ax0.text(0.95, 1.05, 'NO-TTA', transform=ax0.transAxes,
+             fontsize=15, weight='bold')
     
     x08.plot(ax=ax0,name='contourf',mode='ppi',target='vr',
              cvalues=cvalues,terrain=True,bmap=True,
+             tta=False,
              qc=True)
     
     hdtm = x08.plot(ax=ax1,name='contourf',mode='ppi',target='z',
              terrain=True,bmap=True,
              sector=range(130,160),
+             tta=False,
              qc=True)
     
     x09.plot(ax=ax2,name='contourf',mode='ppi',target='vr',
              cvalues=cvalues,terrain=True,bmap=True,
+             tta=False,
              qc=True)
     
     x09.plot(ax=ax3,name='contourf',mode='ppi',target='z',
              terrain=True,bmap=True,
              sector=range(130,160),
+             tta=False,
              qc=True)
 
     x11.plot(ax=ax4,name='contourf',mode='ppi',target='vr',
              cvalues=cvalues,terrain=True,bmap=True,
+             tta=False,
              qc=True)
     
     x11.plot(ax=ax5,name='contourf',mode='ppi',target='z',
              terrain=True,bmap=True,
              sector=range(150,180),
+             tta=False,
              qc=True)
     
     x12.plot(ax=ax6,name='contourf',mode='ppi',target='vr',
              cvalues=cvalues,terrain=True,bmap=True,
+             tta=False,
              qc=True)
     
     x12.plot(ax=ax7,name='contourf',mode='ppi',target='z',
              terrain=True,bmap=True,
              sector=range(150,180),
+             tta=False,
              qc=True)
     
     x13.plot(ax=ax8,name='contourf',mode='ppi',target='vr',
              cbar=dict(loc='bottom',label='[m/s]',size='3%'),
              cvalues=cvalues,
              terrain=True, bmap=True,
+             tta=False,
              qc=True)
     
     x13.plot(ax=ax9,name='contourf',mode='ppi',target='z',
              cbar=dict(loc='bottom',label='[%]',size='3%'),
              terrain=True, bmap=True,
              sector=range(150,180),
+             tta=False,
              qc=True)
     
     ''' add vertical date labels '''
     labs = ('12-14Jan03','21-23Jan03','09Jan04','02Feb04',
             '16-18Feb04')
     axes = (ax1, ax3, ax5, ax7, ax9)
-    for ax,lab in zip(axes,labs):
+    for ax, lab in zip(axes, labs):
         ax1.text(1, 0.6, lab, fontsize=15, va='center',
              transform=ax.transAxes, rotation=-90)
     
     
     ''' make floating axis colorbar for terrain '''
     #                  [left, bott, wid, hgt]
-    axaa = AA.Axes(fig,[-0.36,0.85,0.5,0.1])
+    axaa = AA.Axes(fig,[-0.36, 0.85, 0.5, 0.1])
     axaa.tick_params(labelsize=25)
-    add_colorbar(axaa,hdtm,label='',
-                 ticks=range(0,1001,1000),
-                 ticklabels=['0','1.0'])
+    add_colorbar(axaa, hdtm, label='',
+                 ticks=range(0, 1001, 1000),
+                 ticklabels=['0', '1.0'])
     fig.add_axes(axaa)
-    axaa.remove() # leave only colorbar
-    ax0.text(-0.18, 0.93,'[km]',transform=ax0.transAxes)
+    axaa.remove()  # leave only colorbar
+    ax0.text(-0.18, 0.93, '[km]', transform=ax0.transAxes)
     
     ''' add axis id '''
     axes = (ax0, ax1, ax2, ax3, ax4,
             ax5, ax6, ax7, ax8, ax9)
     for ax in axes:
-        ax.text(0.01,0.93,ax.get_gid(),size=14,
-                weight='bold',transform=ax.transAxes)
+        ax.text(0.01,0.93,ax.get_gid(), size=14,
+                weight='bold', transform=ax.transAxes)
     
     ''' add PPI arrows '''
-    def arrow_end(st_co,r,az):
-        en_co=[st_co[0],st_co[1]]
-        en_co[0]+=r*np.sin(np.radians(az))
-        en_co[1]+=r*np.cos(np.radians(az))
-        return (en_co[0],en_co[1])
-    arrows1={'arrow1':{'c0':(120,98),'az':310},
-             'arrow2':{'c0':(80,85),'az':330},
-             'arrow3':{'c0':(20,90),'az':350},
-            }
-    arrows2={'arrow1':{'c0':(120,98),'az':310},
-             'arrow2':{'c0':(80,78),'az':330},
-             'arrow3':{'c0':(20,105),'az':0},
-            }
-    arrows3={'arrow1':{'c0':(120,99),'az':320},
-             'arrow2':{'c0':(80,85),'az':340},
-             'arrow3':{'c0':(20,90),'az':350},
-            }             
-    arrows4={'arrow1':{'c0':(120,98),'az':300},
-             'arrow2':{'c0':(80,90),'az':350},
-             'arrow3':{'c0':(20,110),'az':10},
-            } 
-    arrows5={'arrow1':{'c0':(120,98),'az':300},
-             'arrow2':{'c0':(80,78),'az':330},
-             'arrow3':{'c0':(20,90),'az':350},
-            }              
-    scale = 2.8 # use for output figure
+    def arrow_end(st_co, r, az):
+        en_co = [st_co[0], st_co[1]]
+        en_co[0] += r*np.sin(np.radians(az))
+        en_co[1] += r*np.cos(np.radians(az))
+        return en_co[0], en_co[1]
+
+    arrows1 = {'arrow1':{'c0':(130,115),'az':330},
+             'arrow2':{'c0':(80,118),'az':355},
+             'arrow3':{'c0':(30,150),'az':13},
+              }
+    arrows2 = {'arrow1':{'c0':(130,115),'az':330},
+             'arrow2':{'c0':(80,118),'az':355},
+             'arrow3':{'c0':(30,150),'az':13},
+               }
+    arrows3 = {'arrow1':{'c0':(130,115),'az':330},
+             'arrow2':{'c0':(80,118),'az':355},
+             'arrow3':{'c0':(30,150),'az':13},
+              }
+    arrows4 = {'arrow1':{'c0':(130,115),'az':320},
+             'arrow2':{'c0':(80,110),'az':345},
+             'arrow3':{'c0':(30,120),'az':1},
+              }
+    arrows5 = {'arrow1':{'c0':(130,120),'az':340},
+             'arrow2':{'c0':(80,112),'az':350},
+             'arrow3':{'c0':(28,128),'az':7},
+              }
+
+    scale = 2.5  # use for output figure
     length = 30
-    arrows=(arrows1,arrows2,arrows3,arrows4,arrows5)
+    arrows=(arrows1, arrows2, arrows3, arrows4, arrows5)
     axes = (axes[0],axes[2],axes[4],axes[6],axes[8])
     for ax,arrow in zip(axes,arrows):
         for _,arr in arrow.iteritems():
             c0 = tuple(v*scale for v in arr['c0'])
             az = arr['az']
             ax.annotate("",
-                        xy         = arrow_end(c0,length*scale,az),
-                        xytext     = c0,
-                        xycoords   = 'axes pixels',
-                        textcoords = 'axes pixels',
-                        arrowprops = dict(
+                        xy=arrow_end(c0,length*scale,az),
+                        xytext=c0,
+                        xycoords='axes pixels',
+                        textcoords='axes pixels',
+                        arrowprops=dict(
                                           shrinkA=7,
                                           shrinkB=7,
                                           fc='w',

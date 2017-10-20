@@ -416,14 +416,14 @@ def get_axis(axisname, case, scanmode):
         basedir = [basestr.format(str(case).zfill(2),'005')]
     elif scanmode in ['RHI','rhi']:
         basestr = datadir + '/c{0}/RHI/az{1}/'
-        if case == 13:
+        if case in [11, 13]:
             ang1, ang2 = ['180', '360']
             basedir = [basestr.format(str(case).zfill(2), ang1),
                        basestr.format(str(case).zfill(2), ang2)]
-        elif case == 9:
+        elif case in [8, 9]:
             basedir = [basestr.format(str(case).zfill(2), '180')]
-        elif case == 8:
-            basedir = [basestr.format(str(case).zfill(2), '180')]
+        elif case == 12:
+            basedir = [basestr.format(str(case).zfill(2), '006')]
 
     if len(basedir) == 1:
         cdf_files = glob(basedir[0] + '*.cdf')
@@ -514,8 +514,70 @@ def get_mean(arrays, minutes=None, name=None, good_thres=1000):
 
         return mean, good_array
 
+def get_median(arrays, minutes=None, name=None, good_thres=1000):
+    '''
+    good_thres is the minimum # of pixels (gates, cells) that
+    a sweep needs to have to be considered good
+    '''
+    if minutes:
+        g = pd.TimeGrouper(str(minutes) + 'T')
+        G = arrays.groupby(g)
 
-def get_dbz_freq(arrays, percentile=None):
+        gindex = G.indices.items()
+        gindex.sort()
+        median = []
+        dates = []
+        for gx in gindex:
+            gr = arrays.ix[gx[1]].values
+            a = gr[0]
+
+            if name == 'ZA':
+                a = np.power(10., a / 10.)
+
+            for g in gr[1:]:
+                a = np.dstack((a, g))
+
+            if a.ndim == 2:
+                ''' in case the hour has only one sweep
+                creates a singleton (nrows, ncols, 1) '''
+                a = np.expand_dims(a, axis=2)
+            m = np.nanmedian(a, axis=2)
+
+            if name == 'ZA':
+                m = 10 * np.log10(m)
+            median.append(m)
+            dates.append(gx[0])
+
+            return dates, np.array(median)
+
+    else:
+        narrays = arrays.shape[0]
+        good_array = np.array([])
+        for n in range(0, narrays):
+            if n == 0:
+                A = arrays.iloc[[n]].values[0]  # first value
+                # number of non-nan points
+                valid = A.size - np.sum(np.isnan(A))
+                # good_array = np.append(good_array, valid)
+            else:
+                a = arrays.iloc[[n]].values[0]
+                valid = a.size - np.sum(np.isnan(a))
+                # good_array = np.append(good_array, valid)
+                A = np.dstack((A, a))
+            good_array = np.append(good_array, valid)
+
+        if name == 'ZA':
+            A = toLinear(A)
+
+        median = np.nanmedian(A, axis=2)
+
+        if name == 'ZA':
+            median = toLog10(median)
+
+        return median, good_array
+
+
+def get_dbz_freq(arrays, percentile=None, constant=None):
     
     
     from rv_utilities import pandas2stack
@@ -531,7 +593,10 @@ def get_dbz_freq(arrays, percentile=None):
     distrz = np.cumsum(freqz)    
 
     ''' gets percentile '''
-    thres = np.percentile(Z, percentile)
+    if percentile is not None:
+        thres = np.percentile(Z, percentile)
+    elif constant is not None:
+        thres = constant
     
     a = arrays.iloc[[0]].values[0]
     COND = np.zeros(a.shape)

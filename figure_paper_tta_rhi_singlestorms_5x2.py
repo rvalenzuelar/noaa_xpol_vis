@@ -37,34 +37,34 @@ params = dict(wdir_thres=150,
 try:
     x08
 except NameError:
-    x08=xta.process(case=[8],params=params)
+    x08 = xta.process(case=[8], params=params)
 
 try:
     x09
 except NameError:
-    x09=xta.process(case=[9],params=params)
+    x09 = xta.process(case=[9], params=params)
 
 try:
     x11
 except NameError:
-    x11=xta.process(case=[11],params=params)
+    x11 = xta.process(case=[11], params=params)
     
 try:
     x12
 except NameError:
-    x12=xta.process(case=[12],params=params)
+    x12 = xta.process(case=[12], params=params)
 
 try:
     x13
 except NameError:
-    x13=xta.process(case=[13],params=params)
+    x13 = xta.process(case=[13], params=params)
 
-scale=1.6
-fig = plt.figure(figsize=(8*scale, 5*scale))
+scale = 1.6
+fig = plt.figure(figsize=(6*scale, 5*scale))
 
 gs0 = gridspec.GridSpec(1, 2,
-                        top=0.99, bottom=0.01,
-                        left=0.15, right=0.85,
+                        top=0.95, bottom=0.15,
+                        left=0.08, right=0.92,
                         wspace=0.05)
 
 gs00 = gssp(5, 1,
@@ -86,12 +86,10 @@ ax7 = plt.subplot(gs01[3],gid='(h)')
 ax8 = plt.subplot(gs00[4],gid='(i)')
 ax9 = plt.subplot(gs01[4],gid='(j)')
 
-
-
 ticklabsize = 16
 cbarlabsize = 16
 
-ax0.text(0.95, 1.05 ,'TTA',transform=ax0.transAxes,
+ax0.text(0.95, 1.05,'TTA',transform=ax0.transAxes,
          fontsize=15,weight='bold')
 
 x08.plot(ax=ax0,name='contourf',mode='rhi',target='vr',
@@ -149,8 +147,8 @@ for ax,lab in zip(axes,labs):
 
 ''' make floating axis colorbar for vr y z '''
 #                  [left, bott, wid, hgt]
-cbVr = AA.Axes(fig,[0.15, -0.1, 0.34, 0.6])
-cbZ  = AA.Axes(fig,[0.51, -0.1, 0.34, 0.6])
+cbVr = AA.Axes(fig,[0.15, 0.06, 0.34, 0.6])
+cbZ  = AA.Axes(fig,[0.51, 0.06, 0.34, 0.6])
 add_colorbar(cbVr,hvr,label='[m/s]',loc='bottom',
              ticks=range(0,32,2),
              ticklabels=range(0,34,4))
@@ -166,36 +164,36 @@ cbZ.remove() # leave only colorbar
 axes = (ax0, ax1, ax2, ax3, ax4,
         ax5, ax6, ax7, ax8, ax9)
 for ax in axes:
-    ax.text(0.9,0.85,ax.get_gid(),size=14,
+    ax.text(0.9, 0.85, ax.get_gid(),size=14,
             weight='bold',transform=ax.transAxes,
             ha='left')
 
 ''' add RHI arrow '''
-arrows=( {'c0':(70,3),'c1':(180,15),'rad':-0.05},
-         {'c0':(25,7),'c1':(180,20),'rad':-0.05},
-         {'c0':(30,7),'c1':(180,25),'rad':-0.05},
-         {'c0':(30,5),'c1':(180,25),'rad':-0.07},
-        )
-            
-scale = 4.1 # use for output figure
-#scale = 1.0 # use for iPython figure
-axes = (axes[0],axes[2],axes[4],axes[8])
-for arr,ax in zip(arrows,axes):
-    c0 = tuple(v*scale for v in arr['c0'])
-    c1 = tuple(v*scale for v in arr['c1'])
-    rad = arr['rad']
-    ax.annotate("",
-                xy = c1,
-                xytext = c0,
-                xycoords='axes pixels', 
-                textcoords='axes pixels',
-                arrowprops=dict(
-                                shrinkA=5,
-                                shrinkB=5,
-                                fc="w", ec="k",
-                                connectionstyle="arc3,rad={}".format(rad),
-                                )
-                )
+# arrows=( {'c0':(70,3),'c1':(180,15),'rad':-0.05},
+#          {'c0':(25,7),'c1':(180,20),'rad':-0.05},
+#          {'c0':(30,7),'c1':(180,25),'rad':-0.05},
+#          {'c0':(30,5),'c1':(180,25),'rad':-0.07},
+#         )
+#
+# scale = 4.1 # use for output figure
+# #scale = 1.0 # use for iPython figure
+# axes = (axes[0],axes[2],axes[4],axes[8])
+# for arr,ax in zip(arrows,axes):
+#     c0 = tuple(v*scale for v in arr['c0'])
+#     c1 = tuple(v*scale for v in arr['c1'])
+#     rad = arr['rad']
+#     ax.annotate("",
+#                 xy = c1,
+#                 xytext = c0,
+#                 xycoords='axes pixels',
+#                 textcoords='axes pixels',
+#                 arrowprops=dict(
+#                                 shrinkA=5,
+#                                 shrinkB=5,
+#                                 fc="w", ec="k",
+#                                 connectionstyle="arc3,rad={}".format(rad),
+#                                 )
+#                 )
 
 
 plt.show()

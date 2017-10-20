@@ -13,7 +13,7 @@ import matplotlib as mpl
 from matplotlib.gridspec import GridSpecFromSubplotSpec as gssp
 from rv_utilities import add_colorbar
 
-mpl.rcParams['font.size']=15
+mpl.rcParams['font.size'] = 15
 
 ''' 
     if instances do not exist in iPython namespace
@@ -26,19 +26,19 @@ params = dict(wdir_thres=150,
 try:
     x08
 except NameError:
-    x08=xta.process(case=[8], params=params)
+    x08 = xta.process(case=[8], params=params)
 
 try:
     x10
 except NameError:
-    x10=xta.process(case=[9], params=params)
+    x10 = xta.process(case=[9], params=params)
     
 try:
     x14
 except NameError:
-    x14=xta.process(case=[13], params=params)
+    x14 = xta.process(case=[13], params=params)
 
-scale = 1.6
+scale = 1.
 fig = plt.figure(figsize=(6*scale, 4*scale))
 
 gs0 = gridspec.GridSpec(1, 2,
@@ -104,7 +104,10 @@ hz = x14.plot(ax=ax5,name='contourf',mode='rhi',target='z',
 
 ''' add vertical date labels '''
 # dts = ['12-14Jan03', '15-16Feb03', '25Feb04']
-dts = ['12-14Jan03', '21-23Jan03', '16-18Feb04']
+# dts = ['12-14Jan03', '21-23Jan03', '16-18Feb04']
+# dts = ['15-16Feb03', '09Jan04', '02Feb04']
+dts = ['15-16Feb03', '09Jan04', '25Feb04']
+
 ax1.text(1, 0.5, dts[0], fontsize=15,va='center',
          transform=ax1.transAxes,rotation=-90)
 ax3.text(1, 0.5, dts[1], fontsize=15,va='center',

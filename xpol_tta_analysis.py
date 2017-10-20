@@ -147,26 +147,33 @@ class process:
         rhi_ntta_vr = xpol.convert_to_common_grid(self.rhi_ntta['VR']) 
  
         
-        ''' use try for cases with tta=None '''
+        ''' RHI TTA
+        '''
         if rhi_tta_za is not None:
-            out = xpol.get_dbz_freq(rhi_tta_za, percentile=50)
+            # out = xpol.get_dbz_freq(rhi_tta_za, percentile=50)
+            out = xpol.get_dbz_freq(rhi_tta_za, constant=26)
             dbz_freq, thres, distrz, binsz = out
-            out = xpol.get_mean(rhi_tta_vr, name='VR')        
+            # out = xpol.get_mean(rhi_tta_vr, name='VR')
+            out = xpol.get_median(rhi_tta_vr, name='VR')
             vr_mean, good = out
             distr={'csum':distrz,'bins':binsz}
         else:
-            vr_mean,dbz_freq,thres,distr = [None,None,None,None]            
-            
+            vr_mean,dbz_freq,thres,distr = [None, None, None, None]
+
         self.rhi_tta_vr = vr_mean
         self.rhi_tta_z = dbz_freq
         self.rhi_tta_thres = thres
         self.rhi_tta_distrz = distr
 
-        ''' use try for cases with tta=None '''
+        ''' PPI TTA
+            use try for cases with tta=None 
+        '''
         try:
-            out = xpol.get_dbz_freq(self.ppi_tta['ZA'], percentile=50)
+            # out = xpol.get_dbz_freq(self.ppi_tta['ZA'], percentile=50)
+            out = xpol.get_dbz_freq(self.ppi_tta['ZA'], constant=26)
             dbz_freq, thres, distrz, binsz = out
-            out = xpol.get_mean(self.ppi_tta['VR'], name='VR')        
+            # out = xpol.get_mean(self.ppi_tta['VR'], name='VR')
+            out = xpol.get_median(self.ppi_tta['VR'], name='VR')
             vr_mean, good = out
             distr={'csum':distrz,'bins':binsz}
         except TypeError:
@@ -177,22 +184,30 @@ class process:
         self.ppi_tta_thres = thres
         self.ppi_tta_distrz = distr
 
-        out = xpol.get_dbz_freq(rhi_ntta_za, percentile=50)
+        ''' RHI NO-TTA
+        '''
+        # out = xpol.get_dbz_freq(rhi_ntta_za, percentile=50)
+        out = xpol.get_dbz_freq(rhi_ntta_za, constant=26)
         dbz_freq, thres, distrz, binsz = out
-        out = xpol.get_mean(rhi_ntta_vr, name='VR')        
+        # out = xpol.get_mean(rhi_ntta_vr, name='VR')
+        out = xpol.get_median(rhi_ntta_vr, name='VR')
         vr_mean, good = out        
-        distr={'csum':distrz,'bins':binsz}
+        distr={'csum': distrz, 'bins': binsz}
         
         self.rhi_ntta_vr = vr_mean
         self.rhi_ntta_z = dbz_freq
         self.rhi_ntta_thres = thres
         self.rhi_ntta_distrz = distr
 
-        out = xpol.get_dbz_freq(self.ppi_ntta['ZA'], percentile=50)
+        ''' PPI NO-TTA
+        '''
+        # out = xpol.get_dbz_freq(self.ppi_ntta['ZA'], percentile=50)
+        out = xpol.get_dbz_freq(self.ppi_ntta['ZA'], constant=26)
         dbz_freq, thres, distrz, binsz = out
-        out = xpol.get_mean(self.ppi_ntta['VR'], name='VR')        
-        vr_mean, good = out        
-        distr={'csum':distrz,'bins':binsz}
+        # out = xpol.get_mean(self.ppi_ntta['VR'], name='VR')
+        out = xpol.get_median(self.ppi_ntta['VR'], name='VR')
+        vr_mean, good = out
+        distr={'csum': distrz, 'bins': binsz}
         
         self.ppi_ntta_vr = vr_mean
         self.ppi_ntta_z = dbz_freq

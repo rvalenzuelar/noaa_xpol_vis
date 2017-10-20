@@ -94,6 +94,7 @@ scale = 1.4
 fig, axs = plt.subplots(3, 1, figsize=(4.6*scale,  4.3*scale),
                        sharex=True, sharey=True
                        )
+axs = axs.flatten()
 dts = ['12-14Jan03', '21-23Jan03', '16-18Feb04']
 fignames = ['(a)', '(b)', '(c)']
 for c, ax, dt, figname in zip([8, 9, 13], axs, dts, fignames):
@@ -113,13 +114,15 @@ for c, ax, dt, figname in zip([8, 9, 13], axs, dts, fignames):
         expand = np.expand_dims(serie_llj[c].iloc[i], axis=2)
         arr = np.concatenate((arr, expand), axis=2)
     _,_,cnt = arr.shape
-    arr_mean = np.nanmean(arr, axis=2)
+    # arr_mean = np.nanmean(arr, axis=2)
+    arr_mean = np.nanmedian(arr, axis=2)
 
     x = xp[c].get_axis('x', 'rhi')
     z = xp[c].get_axis('z', 'rhi')
     X, Z = np.meshgrid(x, z)
 
     cf = ax.contourf(X, Z, arr_mean, cvalues, cmap=cmap)
+
     ax.set_ylim([0, 5])
     ax.set_xlim([-40, 40])
     ax.set_yticks([1, 2, 3, 4])
