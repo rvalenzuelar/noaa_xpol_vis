@@ -131,7 +131,6 @@ class process:
             self.ppi_tta = TTAdf
             self.ppi_ntta = NTTAdf
 
-
     def statistics(self):
         
         print('...calculating statistics')        
@@ -153,8 +152,7 @@ class process:
             
         rhi_ntta_za = xpol.convert_to_common_grid(self.rhi_ntta['ZA'])
         rhi_ntta_vr = xpol.convert_to_common_grid(self.rhi_ntta['VR']) 
- 
-        
+
         ''' RHI TTA
         '''
         if rhi_tta_za is not None:
