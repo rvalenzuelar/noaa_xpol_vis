@@ -1,4 +1,8 @@
 
+
+import matplotlib
+matplotlib.use("Qt5Agg")
+
 import matplotlib.pyplot as plt
 
 
@@ -29,7 +33,6 @@ def figs_to_frames(da):
             return
 
         curr_pos = curr_pos % len_plots
-        print 'asdasd'
         ax.cla()
         ops_cf['add_colorbar'] = False
         plot(ops_cf)
