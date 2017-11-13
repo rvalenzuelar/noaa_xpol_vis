@@ -12,7 +12,7 @@ import mpl_toolkits.axisartist as AA
 import matplotlib as mpl
 from matplotlib.gridspec import GridSpecFromSubplotSpec as gssp
 from rv_utilities import add_colorbar
-mpl.rcParams['font.size']=15
+mpl.rcParams['font.size'] = 15
 
 ''' 
     use:
@@ -36,9 +36,9 @@ except NameError:
     ''' 02Feb04 (12) is excluded for RHIs only internally in
         the process method
     ''' 
-    xall=xta.process(case=[8, 9, 10, 11, 12, 13, 14], params=params)
+    xall = xta.process(case=[8, 9, 10, 11, 12, 13, 14], params=params)
 
-scale=1.2
+scale = 1.2
 fig = plt.figure(figsize=(7.5*scale, 11*scale))
 
 gs0 = gridspec.GridSpec(1, 2,

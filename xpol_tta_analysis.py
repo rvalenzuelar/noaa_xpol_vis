@@ -137,7 +137,7 @@ class process:
 
         '''--select statistic--'''
         # stat_dbz = dict(percentile=50)
-        stat_dbz = dict(constant=16.8)
+        stat_dbz = dict(constant=25.)
 
         # stat_vr = xpol.get_mean
         stat_vr = xpol.get_median
@@ -246,7 +246,7 @@ class process:
                 x = np.arange(-40, 30.6, 0.14)  # for common grid
                 y = np.arange(0, 12.20, 0.20)
 
-            X,Y = np.meshgrid(x,y)
+            X, Y = np.meshgrid(x, y)
 
             ''' set contour values '''
             if target == 'z':

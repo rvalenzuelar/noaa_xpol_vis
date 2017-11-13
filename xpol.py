@@ -416,11 +416,11 @@ def get_axis(axisname, case, scanmode):
         basedir = [basestr.format(str(case).zfill(2),'005')]
     elif scanmode in ['RHI','rhi']:
         basestr = datadir + '/c{0}/RHI/az{1}/'
-        if case in [11, 13]:
+        if case in [11, 13, 14]:
             ang1, ang2 = ['180', '360']
             basedir = [basestr.format(str(case).zfill(2), ang1),
                        basestr.format(str(case).zfill(2), ang2)]
-        elif case in [8, 9]:
+        elif case in [8, 9, 10]:
             basedir = [basestr.format(str(case).zfill(2), '180')]
         elif case == 12:
             basedir = [basestr.format(str(case).zfill(2), '006')]

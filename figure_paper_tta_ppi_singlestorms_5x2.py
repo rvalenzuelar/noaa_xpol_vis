@@ -159,37 +159,41 @@ def main():
                 weight='bold',transform=ax.transAxes)
     
     ''' add PPI arrows '''
-    def arrow_end(st_co,r,az):
-        en_co=[st_co[0],st_co[1]]
-        en_co[0]+=r*np.sin(np.radians(az))
-        en_co[1]+=r*np.cos(np.radians(az))
-        return (en_co[0],en_co[1])
-    arrows1={'arrow1':{'c0':(120,98),'az':310},
-             'arrow2':{'c0':(80,85),'az':330},
-             'arrow3':{'c0':(20,90),'az':350},
-            }
-    arrows2={'arrow1':{'c0':(120,98),'az':310},
-             'arrow2':{'c0':(80,78),'az':330},
-             'arrow3':{'c0':(20,105),'az':0},
-            }
-    arrows3={'arrow1':{'c0':(120,99),'az':320},
-             'arrow2':{'c0':(80,85),'az':340},
-             'arrow3':{'c0':(20,90),'az':350},
-            }             
-    arrows4={'arrow1':{'c0':(120,98),'az':300},
-             'arrow2':{'c0':(80,90),'az':350},
-             'arrow3':{'c0':(20,110),'az':10},
-            } 
-    arrows5={'arrow1':{'c0':(120,98),'az':300},
-             'arrow2':{'c0':(80,78),'az':330},
-             'arrow3':{'c0':(20,90),'az':350},
-            }              
-    scale = 2.8 # use for output figure
+    def arrow_end(st_co, r, az):
+
+        en_co=[st_co[0], st_co[1]]
+        en_co[0] += r*np.sin(np.radians(az))
+        en_co[1] += r*np.cos(np.radians(az))
+
+        return en_co[0], en_co[1]
+
+    arrows1 = {'arrow1':{'c0':(120,98),'az':310},
+               'arrow2':{'c0':(80,85),'az':330},
+               'arrow3':{'c0':(20,90),'az':350},
+              }
+    arrows2 = {'arrow1':{'c0':(120,98),'az':310},
+               'arrow2':{'c0':(80,78),'az':330},
+               'arrow3':{'c0':(20,105),'az':0},
+              }
+    arrows3 = {'arrow1':{'c0':(120,99),'az':320},
+               'arrow2':{'c0':(80,85),'az':340},
+               'arrow3':{'c0':(20,90),'az':350},
+              }
+    arrows4 = {'arrow1':{'c0':(120,98),'az':300},
+               'arrow2':{'c0':(80,90),'az':350},
+               'arrow3':{'c0':(20,110),'az':10},
+              }
+    arrows5 = {'arrow1':{'c0':(120,98),'az':300},
+               'arrow2':{'c0':(80,78),'az':330},
+               'arrow3':{'c0':(20,90),'az':350},
+              }
+
+    scale = 2.8  # use for output figure
     length = 30
-    arrows=(arrows1,arrows2,arrows3,arrows4,arrows5)
-    axes = (axes[0],axes[2],axes[4],axes[6],axes[8])
-    for ax,arrow in zip(axes,arrows):
-        for _,arr in arrow.iteritems():
+    arrows=(arrows1, arrows2, arrows3, arrows4, arrows5)
+    axes = (axes[0], axes[2], axes[4], axes[6], axes[8])
+    for ax,arrow in zip(axes, arrows):
+        for _, arr in arrow.iteritems():
             c0 = tuple(v*scale for v in arr['c0'])
             az = arr['az']
             ax.annotate("",

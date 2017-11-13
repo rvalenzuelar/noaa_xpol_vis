@@ -61,8 +61,6 @@ ds11 = make_xarray(xp11, slices=slices)
 ''' rhi sweep cutted at dropped time '''
 ds11 = ds11.drop(datetime(2004,1,9,19,13), dim='time')
 
-
-
 y = 2004
 slices = [slice(datetime(y,2,2,2,0), datetime(y,2,2,5,0)),
           slice(datetime(y,2,2,6,0), datetime(y,2,2,8,0)),
