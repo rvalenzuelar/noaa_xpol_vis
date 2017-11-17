@@ -13,7 +13,9 @@ def figs_to_frames(da):
 
     def plot(ops_cf):
 
-        da.isel(time=curr_pos).plot.contourf(**ops_cf)
+        # da.isel(time=curr_pos).plot.contourf(**ops_cf)
+        da.isel(time=curr_pos).plot(**ops_cf)
+
         # lonlims = [arr1.lon.min(), arr1.lon.max()]
         # latlims = [arr1.lat.min(), arr1.lat.max()]
         # ax.set_xlim(lonlims)

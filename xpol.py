@@ -16,7 +16,7 @@ from glob import glob
 from datetime import datetime
 from matplotlib.backends.backend_pdf import PdfPages
 # from mpl_toolkits.axes_grid1 import make_axes_locatable
-from rv_utilities import add_colorbar
+from rvtools import add_colorbar
 
 #from mpl_toolkits.basemap import Basemap
 
@@ -580,15 +580,22 @@ def get_median(arrays, minutes=None, name=None, good_thres=1000):
 def get_dbz_freq(arrays, percentile=None, constant=None):
     
     
-    from rv_utilities import pandas2stack
+    from rvtools import pandas2stack
     
     narrays = arrays.shape[0]
-    X = pandas2stack(arrays)
+
+    ''' convert pandas to numpy array (time,y,x)
+        each array has to have same dimension
+    '''
+    # X = pandas2stack(arrays)
+    slist = arrays.tolist()
+    X = np.array(slist)
+
     Z = X[~np.isnan(X)].flatten()
     
     ' gets cummulative distribution of Z '
     freqz, binsz = np.histogram(Z,
-                                bins=np.arange(-15,50),
+                                bins=np.arange(-15, 50),
                                 density=True)    
     distrz = np.cumsum(freqz)    
 
@@ -632,7 +639,7 @@ def get_dbz_freq(arrays, percentile=None, constant=None):
     freq[freq == 0] = np.nan
 
     return freq, thres, distrz, binsz
-    # return csum, thres, mean
+    # return freq, csum, narrays
 
 
 def convert_to_common_grid(input_array):

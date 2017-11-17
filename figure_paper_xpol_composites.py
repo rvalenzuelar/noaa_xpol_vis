@@ -11,7 +11,7 @@ import numpy as np
 import mpl_toolkits.axisartist as AA
 import matplotlib as mpl
 from matplotlib.gridspec import GridSpecFromSubplotSpec as gssp
-from rv_utilities import add_colorbar
+from rvtools import add_colorbar
 mpl.rcParams['font.size'] = 15
 
 ''' 
@@ -72,30 +72,30 @@ cvalues1 = range(-30,34,4)
 cvalues2 = range(0,32,2)
 
 
-ax0.text(0.5, 1.05 ,'TTA',transform=ax0.transAxes,
+ax0.text(0.5, 1.05, 'TTA',transform=ax0.transAxes,
          fontsize=15,weight='bold')
 
-ax1.text(0.5, 1.05 ,'NO-TTA',transform=ax1.transAxes,
+ax1.text(0.5, 1.05, 'NO-TTA',transform=ax1.transAxes,
          ha='center',fontsize=15,weight='bold')
 
-xall.plot(ax=ax0,name='contourf',mode='ppi',target='vr',
+xall.plot(ax=ax0, name='contourf',mode='ppi',target='vr',
           cbar=dict(loc='right',invisible=True),
           terrain=True,bmap=True,qc=True,
           cvalues=cvalues1)
 
-xall.plot(ax=ax1,name='contourf',mode='ppi',target='vr',
+xall.plot(ax=ax1, name='contourf',mode='ppi',target='vr',
           cbar=dict(loc='right',label='[m/s]'),
           cvalues=cvalues1,
           terrain=True,bmap=True,qc=True,
           tta=False)
 
-xall.plot(ax=ax2,name='contourf',mode='rhi',target='vr',
+xall.plot(ax=ax2, name='contourf',mode='rhi',target='vr',
           cbar=dict(loc='right',invisible=True),
           cvalues=cvalues2,
           qc=True,
           xticklabs=False)
 
-xall.plot(ax=ax3,name='contourf',mode='rhi',target='vr',
+xall.plot(ax=ax3, name='contourf',mode='rhi',target='vr',
           cbar=dict(loc='right',label='[m/s]',labelpad=13),
           cvalues=cvalues2,
           xticklabs=False,
@@ -103,25 +103,25 @@ xall.plot(ax=ax3,name='contourf',mode='rhi',target='vr',
           qc=True,
           tta=False)
 
-xall.plot(ax=ax4,name='contourf',mode='ppi',target='z',
+xall.plot(ax=ax4, name='contourf',mode='ppi',target='z',
           cbar=dict(loc='right',invisible=True),
           terrain=True,bmap=True,qc=True,
           sector=range(135,180),
           cvalues=cvalues1)
 
-hdtm = xall.plot(ax=ax5,name='contourf',mode='ppi',target='z',
+hdtm = xall.plot(ax=ax5, name='contourf',mode='ppi',target='z',
           cbar=dict(loc='right',label='[%]'),
           cvalues=cvalues1,
           terrain=True,bmap=True,qc=True,
           sector=range(135,180),
           tta=False)
 
-xall.plot(ax=ax6,name='contourf',mode='rhi',target='z',
+xall.plot(ax=ax6, name='contourf',mode='rhi',target='z',
           cbar=dict(loc='right',invisible=True),
           qc=True,
           cvalues=cvalues2)
 
-xall.plot(ax=ax7,name='contourf',mode='rhi',target='z',
+xall.plot(ax=ax7, name='contourf',mode='rhi',target='z',
           cbar=dict(loc='right',invisible=True),
           cvalues=cvalues2,
           yticklabs=False,
@@ -176,63 +176,64 @@ ntta_arrows={'arrow1':{'c0':(130,115),'az':335},
             'arrow5':{'c0':(35,130),'az':5},
             'arrow6':{'c0':(15,140),'az':10},
             }
-scale = 4.1 # use for output figure
-#scale = 1.0 # use for iPython figure
-length = 30
-arrows=[tta_arrows,ntta_arrows]
-axes = [axes[0],axes[1]]
-for ax,arrow in zip(axes,arrows):
-    for _,arr in arrow.iteritems():
-        c0 = tuple(v*scale for v in arr['c0'])
-        az = arr['az']
-        ax.annotate("",
-                    xy         = arrow_end(c0,length*scale,az),
-                    xytext     = c0,
-                    xycoords   = 'axes pixels',
-                    textcoords = 'axes pixels',
-                    zorder     = 1,
-                    arrowprops = dict(shrinkA=6,
-                                      shrinkB=6,
-                                      fc='w',
-                                      ec='k',
-                                      lw=1))
 
-''' single arrows '''
-c0 = tuple(v*scale for v in (145,34))
-axes[0].annotate("",
-            xy         = arrow_end(c0,length*scale,355),
-            xytext     = c0,
-            xycoords   = 'axes pixels',
-            textcoords = 'axes pixels',
-            zorder     = 1,
-            arrowprops = dict(shrinkA=6,
-                              shrinkB=6,
-                              fc='w',
-                              ec='k',
-                              lw=1))
-c0 = tuple(v*scale for v in (140,67))
-axes[1].annotate("",
-            xy         = arrow_end(c0,length*scale,0),
-            xytext     = c0,
-            xycoords   = 'axes pixels',
-            textcoords = 'axes pixels',
-            zorder     = 1,
-            arrowprops = dict(shrinkA=6,
-                              shrinkB=6,
-                              fc='w',
-                              ec='k',
-                              lw=1))
-
-''' add RHI arrow '''
-ax2.annotate("",
-             xy = (150*scale, 25*scale),
-             xytext = (25*scale,3*scale),
-             xycoords='axes pixels', 
-             textcoords='axes pixels',
-             arrowprops=dict(shrinkA=5,
-                             shrinkB=5,
-                             fc="w", ec="k",
-                             connectionstyle="arc3,rad=-0.1"))
+# scale = 4.1 # use for output figure
+# #scale = 1.0 # use for iPython figure
+# length = 30
+# arrows=[tta_arrows,ntta_arrows]
+# axes = [axes[0],axes[1]]
+# for ax,arrow in zip(axes,arrows):
+#     for _,arr in arrow.iteritems():
+#         c0 = tuple(v*scale for v in arr['c0'])
+#         az = arr['az']
+#         ax.annotate("",
+#                     xy         = arrow_end(c0,length*scale,az),
+#                     xytext     = c0,
+#                     xycoords   = 'axes pixels',
+#                     textcoords = 'axes pixels',
+#                     zorder     = 1,
+#                     arrowprops = dict(shrinkA=6,
+#                                       shrinkB=6,
+#                                       fc='w',
+#                                       ec='k',
+#                                       lw=1))
+#
+# ''' single arrows '''
+# c0 = tuple(v*scale for v in (145,34))
+# axes[0].annotate("",
+#             xy         = arrow_end(c0,length*scale,355),
+#             xytext     = c0,
+#             xycoords   = 'axes pixels',
+#             textcoords = 'axes pixels',
+#             zorder     = 1,
+#             arrowprops = dict(shrinkA=6,
+#                               shrinkB=6,
+#                               fc='w',
+#                               ec='k',
+#                               lw=1))
+# c0 = tuple(v*scale for v in (140,67))
+# axes[1].annotate("",
+#             xy         = arrow_end(c0,length*scale,0),
+#             xytext     = c0,
+#             xycoords   = 'axes pixels',
+#             textcoords = 'axes pixels',
+#             zorder     = 1,
+#             arrowprops = dict(shrinkA=6,
+#                               shrinkB=6,
+#                               fc='w',
+#                               ec='k',
+#                               lw=1))
+#
+# ''' add RHI arrow '''
+# ax2.annotate("",
+#              xy = (150*scale, 25*scale),
+#              xytext = (25*scale,3*scale),
+#              xycoords='axes pixels',
+#              textcoords='axes pixels',
+#              arrowprops=dict(shrinkA=5,
+#                              shrinkB=5,
+#                              fc="w", ec="k",
+#                              connectionstyle="arc3,rad=-0.1"))
 
 plt.show()
 

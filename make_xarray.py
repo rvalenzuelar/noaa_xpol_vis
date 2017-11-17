@@ -10,6 +10,7 @@
 
 import xarray as xr
 import numpy as np
+import pandas as pd
 
 def make_xarray_rhi(xp, regime=None, slices=None):
 
@@ -19,6 +20,13 @@ def make_xarray_rhi(xp, regime=None, slices=None):
     elif regime == 'ntta':
         xp_vr = xp.rhi_ntta['VR']
         xp_za = xp.rhi_ntta['ZA']
+    else:
+        vr1 = xp.rhi_tta['VR']
+        vr2 = xp.rhi_ntta['VR']
+        xp_vr = pd.concat([vr1, vr2], axis=0)
+        za1 = xp.rhi_tta['ZA']
+        za2 = xp.rhi_ntta['ZA']
+        xp_za = pd.concat([za1, za2], axis=0)
 
     xp_vr.sort_index(inplace=True)
     xp_za.sort_index(inplace=True)
@@ -37,9 +45,10 @@ def make_xarray_rhi(xp, regime=None, slices=None):
     x = xp.get_axis('x','rhi')
     z = xp.get_axis('z','rhi')
 
+    ''' common grid between cases '''
     minx = np.min(x)
     maxx = np.max(x)
-    xx = np.arange(-40, 30.2, 0.14)  # common grid between cases
+    xx = np.arange(-40, 30.2, 0.14)
     ibeg = find_nearest(xx, minx)
     iend = find_nearest(xx, maxx)
 
@@ -72,6 +81,13 @@ def make_xarray_ppi(xp, regime=None, slices=None):
     elif regime == 'ntta':
         xp_vr = xp.ppi_ntta['VR']
         xp_za = xp.ppi_ntta['ZA']
+    else:
+        vr1 = xp.ppi_tta['VR']
+        vr2 = xp.ppi_ntta['VR']
+        xp_vr = pd.concat([vr1, vr2], axis=0)
+        za1 = xp.ppi_tta['ZA']
+        za2 = xp.ppi_ntta['ZA']
+        xp_za = pd.concat([za1, za2], axis=0)
 
     xp_vr.sort_index(inplace=True)
     xp_za.sort_index(inplace=True)
@@ -89,12 +105,6 @@ def make_xarray_ppi(xp, regime=None, slices=None):
     time = [i.to_pydatetime() for i in xp_vr.index]
     x = xp.get_axis('x','ppi')
     y = xp.get_axis('y','ppi')
-
-    # minx = np.min(x)
-    # maxx = np.max(x)
-    # xx = np.arange(-40, 30.2, 0.14)  # common grid between cases
-    # ibeg = find_nearest(xx, minx)
-    # iend = find_nearest(xx, maxx)
 
     ds = xr.Dataset(data_vars={'VR': (['y','x','time'], concat_vr),
                                'ZA': (['y','x','time'], concat_za)},

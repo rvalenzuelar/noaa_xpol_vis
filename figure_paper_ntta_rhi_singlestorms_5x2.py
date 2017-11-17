@@ -18,7 +18,7 @@ import xpol_tta_analysis as xta
 import mpl_toolkits.axisartist as AA
 import matplotlib as mpl
 from matplotlib.gridspec import GridSpecFromSubplotSpec as gssp
-from rv_utilities import add_colorbar
+from rvtools import add_colorbar
 
 mpl.rcParams['font.size'] = 15
 
@@ -61,7 +61,7 @@ except NameError:
     x13 = xta.process(case=[13], params=params)
 
 scale = 1.6
-fig = plt.figure(figsize=(6 * scale, 5 * scale))
+fig = plt.figure(figsize=(6 * scale, 5.5 * scale))
 
 gs0 = gridspec.GridSpec(1, 2,
                         top=0.95, bottom=0.15,
@@ -160,8 +160,8 @@ for ax, lab in zip(axes, labs):
 
 ''' make floating axis colorbar for vr y z '''
 #                  [left, bott, wid, hgt]
-cbVr = AA.Axes(fig, [0.15, 0.06, 0.34, 0.6])
-cbZ = AA.Axes(fig, [0.51, 0.06, 0.34, 0.6])
+cbVr = AA.Axes(fig, [0.1, 0.06, 0.38, 0.6])
+cbZ = AA.Axes(fig, [0.53, 0.06, 0.38, 0.6])
 add_colorbar(cbVr, hvr, label='[m/s]', loc='bottom',
              ticks=range(0, 32, 2),
              ticklabels=range(0, 34, 4))
