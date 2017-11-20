@@ -353,4 +353,4 @@ if __name__ == '__main__':
     # rnd_ppi(regime='ntta')
 
     rnd_ppi(reps=100,regime='tta')
-    rnd_ppi(reps=100,regime='ntta')
+    # rnd_ppi(reps=100,regime='ntta')

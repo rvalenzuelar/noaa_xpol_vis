@@ -28,7 +28,7 @@ import pandas as pd
 import matplotlib.cm as cm
 import tta_analysis3 as ta3
 from edit_in_polar_kdtree import edit_polar
-from rv_utilities import add_colorbar
+from rvtools import add_colorbar
 #from rv_utilities import add_subplot_axes
 
 
