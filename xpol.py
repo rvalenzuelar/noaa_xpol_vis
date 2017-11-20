@@ -583,7 +583,14 @@ def get_dbz_freq(arrays, percentile=None, constant=None):
     from rvtools import pandas2stack
     
     narrays = arrays.shape[0]
-    X = pandas2stack(arrays)
+
+    ''' convert pandas to numpy array (time,y,x)
+        each array has to have same dimension
+    '''
+    # X = pandas2stack(arrays)
+    slist = arrays.tolist()
+    X = np.array(slist)
+
     Z = X[~np.isnan(X)].flatten()
     
     ' gets cummulative distribution of Z '
@@ -632,7 +639,7 @@ def get_dbz_freq(arrays, percentile=None, constant=None):
     freq[freq == 0] = np.nan
 
     return freq, thres, distrz, binsz
-    # return csum, thres, mean
+    # return freq, csum, narrays
 
 
 def convert_to_common_grid(input_array):

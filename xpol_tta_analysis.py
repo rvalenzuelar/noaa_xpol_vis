@@ -123,7 +123,6 @@ class process:
             except KeyError:
                 pass
 
-
         if mode == 'rhi':
             self.rhi_tta = TTAdf
             self.rhi_ntta = NTTAdf
@@ -136,11 +135,11 @@ class process:
         print('...calculating statistics')        
 
         '''--select statistic--'''
-        # stat_dbz = dict(percentile=50)
-        stat_dbz = dict(constant=25.)
+        stat_dbz = dict(percentile=50)
+        # stat_dbz = dict(constant=25.)
 
-        # stat_vr = xpol.get_mean
-        stat_vr = xpol.get_median
+        stat_vr = xpol.get_mean
+        # stat_vr = xpol.get_median
         '''---------------------'''
 
         if self.rhi_tta is not None:
@@ -155,6 +154,7 @@ class process:
 
         ''' RHI TTA
         '''
+        print 'rhi tta'
         if rhi_tta_za is not None:
             out = xpol.get_dbz_freq(rhi_tta_za, **stat_dbz)
             dbz_freq, thres, distrz, binsz = out
@@ -171,6 +171,7 @@ class process:
         ''' PPI TTA
             use try for cases with tta=None 
         '''
+        print 'ppi tta'
         try:
             out = xpol.get_dbz_freq(self.ppi_tta['ZA'], **stat_dbz)
             dbz_freq, thres, distrz, binsz = out
@@ -186,6 +187,7 @@ class process:
 
         ''' RHI NO-TTA
         '''
+        print 'rhi ntta'
         out = xpol.get_dbz_freq(rhi_ntta_za, **stat_dbz)
         dbz_freq, thres, distrz, binsz = out
         vr_mean, good = stat_vr(rhi_ntta_vr, name='VR')
@@ -198,6 +200,7 @@ class process:
 
         ''' PPI NO-TTA
         '''
+        print 'ppi ntta'
         out = xpol.get_dbz_freq(self.ppi_ntta['ZA'], **stat_dbz)
         dbz_freq, thres, distrz, binsz = out
         vr_mean, good = stat_vr(self.ppi_ntta['VR'], name='VR')
