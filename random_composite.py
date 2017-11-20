@@ -399,10 +399,12 @@ def rnd_rhi(reps=None, regime=None):
 
         ''' radial distance for masking '''
         rho = np.sqrt(frac.x ** 2 + frac.z ** 2)  # [km]
+        theta = np.rad2deg(np.arctan(ds08.x / ds08.z))
         max_range = rho<28
         min_frac = frac>20
-        mean_qc = mean.where(max_range)
-        frac_qc = frac.where(max_range & min_frac)
+        max_theta = theta<73
+        mean_qc = mean.where(max_range&max_theta)
+        frac_qc = frac.where(max_range & min_frac&max_theta)
 
         m = mean_qc.plot.contourf(ax=ax[0],
                                 levels=16, vmin=0, vmax=30,
@@ -507,11 +509,22 @@ def rnd_ppi(reps=None, regime=None):
         ''' radial distance for masking '''
         rho = np.sqrt(frac.x ** 2 + frac.y ** 2) # [km]
 
+        ''' azimuth for masking'''
+        x, y = np.meshgrid(ds08.x, ds08.y)
+        theta = np.rad2deg(np.arctan2(y,x))
+        theta = xr.DataArray(theta)
+
         ''' qc '''
         max_rho = rho < 55
         min_frac = frac > 20
+        th_qc1 = theta>-50
+        th_qc2 = theta<100
         mean_qc = mean.where(max_rho)
         frac_qc = frac.where(max_rho & min_frac)
+        # mean_qc = mean.where(max_rho&th_qc1&th_qc2)
+        # frac_qc = frac.where(max_rho & min_frac&th_qc1&th_qc2)
+
+        print theta
 
         ''' make plots '''
         m=mean_qc.plot.contourf(ax=ax[0], levels=16,
@@ -587,10 +600,10 @@ if __name__ == '__main__':
 
     # rnd_rhi(reps=100, regime='tta')
     # plt.savefig('/Users/raulvalenzuela/random_rhi_tta.png')
-    # rnd_rhi(reps=100, regime='ntta')
+    # rnd_rhi(reps=10, regime='ntta')
     # plt.savefig('/Users/raulvalenzuela/random_rhi_ntta.png')
 
-    # rnd_ppi(reps=100,regime='tta')
+    rnd_ppi(reps=10,regime='tta')
     # plt.savefig('/Users/raulvalenzuela/random_ppi_tta.png')
     # rnd_ppi(reps=100,regime='ntta')
     # plt.savefig('/Users/raulvalenzuela/random_ppi_ntta.png')
@@ -606,4 +619,4 @@ if __name__ == '__main__':
     # composite_ppi(regime='ntta')
     # plt.savefig('/Users/raulvalenzuela/composite_ppi_ntta.png')
 
-    regime_ppi(xp09,regime='tta',vmax=40)
+    # regime_ppi(xp09,regime='tta',vmax=40)
