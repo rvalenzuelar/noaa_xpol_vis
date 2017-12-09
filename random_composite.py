@@ -416,7 +416,7 @@ def rnd_rhi(reps=None, regime=None):
                                 levels=9,
                                 vmin=20, vmax=100)
 
-        ax[0].text(-40, 13, 'repetitions: {}'.format(nreps),
+        ax[0].text(-40, 5.3, 'repetitions: {}'.format(nreps),
                    ha='left')
 
         ax[0].set_xlim([-40,40])
@@ -452,7 +452,7 @@ def rnd_ppi(reps=None, regime=None):
         ds14 = make_xarray_ppi(xp14, regime='ntta')
         xpset = [ds08, ds09, ds10, ds11, ds13, ds14]
 
-    fig, ax = plt.subplots(2,1, figsize=[4.38,  7.13]
+    fig, ax = plt.subplots(2,1, figsize=[4.71,  7.12]
                                 ,sharex=True)
 
     nreps=reps
@@ -489,6 +489,13 @@ def rnd_ppi(reps=None, regime=None):
             enh = rnd_ZA.where(rnd_ZA > median).count(
                 dim='time').astype(float)
             all = rnd_ZA.count(dim='time').astype(float)
+
+            enh2 = enh.copy()
+            enh2 = enh2.values
+            enh2[[117, 117, 118, 118, 119],
+                 [112, 113, 112, 113, 112]] = np.nan
+            enh.values = enh2
+
             frac = enh / enh.max()
             one_frac = frac.where(frac <= 1)
 
@@ -510,21 +517,24 @@ def rnd_ppi(reps=None, regime=None):
         rho = np.sqrt(frac.x ** 2 + frac.y ** 2) # [km]
 
         ''' azimuth for masking'''
-        x, y = np.meshgrid(ds08.x, ds08.y)
-        theta = np.rad2deg(np.arctan2(y,x))
-        theta = xr.DataArray(theta)
+        theta = rho.copy()  # copy dimensions
+        y, x = np.meshgrid(ds08.y, ds08.x)
+        th = np.rad2deg(np.arctan2(x,y))
+        th = xr.DataArray(th)
+        theta.values = th+180
 
         ''' qc '''
         max_rho = rho < 55
         min_frac = frac > 20
-        th_qc1 = theta>-50
-        th_qc2 = theta<100
-        mean_qc = mean.where(max_rho)
-        frac_qc = frac.where(max_rho & min_frac)
-        # mean_qc = mean.where(max_rho&th_qc1&th_qc2)
-        # frac_qc = frac.where(max_rho & min_frac&th_qc1&th_qc2)
+        th_qc = (theta < 120) | (theta > 320)
 
-        print theta
+        mean_qc = mean.where(max_rho & th_qc)
+        frac_qc = frac.where(max_rho & min_frac & th_qc)
+
+        ''' check theta '''
+        # fig2, ax2 = plt.subplots(2, 1)
+        # theta.T.plot(ax=ax2[0])
+        # th_qc.T.plot(ax=ax2[1])
 
         ''' make plots '''
         m=mean_qc.plot.contourf(ax=ax[0], levels=16,
@@ -534,7 +544,7 @@ def rnd_ppi(reps=None, regime=None):
                                            vmax=100,
                            cmap='inferno',
                                 levels=9,)
-        ax[0].text(-50, 50, 'repetitions: {}'.format(nreps),
+        ax[0].text(-50, 35, 'repetitions: {}'.format(nreps),
                    ha='left')
 
         ''' add radials and meridional/zonal lines '''
@@ -556,6 +566,22 @@ def rnd_ppi(reps=None, regime=None):
         plt.tight_layout()
         plt.subplots_adjust(top=0.95)
 
+        ax[0].set_xlim([-58,30])
+        ax[1].set_xlim([-58,30])
+        ax[0].set_ylim([-55, 30])
+        ax[1].set_ylim([-55, 30])
+
+        ax[0].set_xticks([])
+        ax[0].set_yticks([])
+        ax[1].set_xticks([])
+        ax[1].set_yticks([])
+
+        ax[0].set_xlabel('')
+        ax[1].set_xlabel('')
+        ax[0].set_ylabel('')
+        ax[1].set_ylabel('')
+
+        return frac_qc
 
 if __name__ == '__main__':
 
@@ -600,13 +626,13 @@ if __name__ == '__main__':
 
     # rnd_rhi(reps=100, regime='tta')
     # plt.savefig('/Users/raulvalenzuela/random_rhi_tta.png')
-    # rnd_rhi(reps=10, regime='ntta')
+    # rnd_rhi(reps=100, regime='ntta')
     # plt.savefig('/Users/raulvalenzuela/random_rhi_ntta.png')
 
-    rnd_ppi(reps=10,regime='tta')
-    # plt.savefig('/Users/raulvalenzuela/random_ppi_tta.png')
-    # rnd_ppi(reps=100,regime='ntta')
-    # plt.savefig('/Users/raulvalenzuela/random_ppi_ntta.png')
+    rnd_ppi(reps=100,regime='tta')
+    plt.savefig('/Users/raulvalenzuela/random_ppi_tta.png')
+    rnd_ppi(reps=100,regime='ntta')
+    plt.savefig('/Users/raulvalenzuela/random_ppi_ntta.png')
 
     # composite_rhi(regime='tta')
     # plt.savefig('/Users/raulvalenzuela/composite_rhi_tta.png')
