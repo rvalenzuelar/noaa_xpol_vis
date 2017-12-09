@@ -7,9 +7,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import xpol
 from datetime import datetime
-from rv_utilities import add_colorbar
+from rvtools import add_colorbar
 import mpl_toolkits.axisartist as AA
-from make_xarray import make_xarray
+from make_xarray import make_xarray_rhi
 
 
 params = dict(wdir_thres=150,
@@ -48,16 +48,16 @@ slices = [slice(datetime(y,1,12,19,0), datetime(y,1,12,22,0)),
            slice(datetime(y,1,13,0,0), datetime(y,1,13,9,0)),
            slice(datetime(y,1,13,10,0), datetime(y,1,13,11,0)),
            slice(datetime(y,1,13,12,0),datetime(y,1,13,13,0))]
-ds08 = make_xarray(xp08, slices=slices)
+ds08 = make_xarray_rhi(xp08, regime='ntta', slices=slices)
 
 y = 2003
 slices = [slice(datetime(y,1,22,20,0), datetime(y,1,23,2,0))]
-ds09 = make_xarray(xp09, slices=slices)
+ds09 = make_xarray_rhi(xp09, regime='ntta', slices=slices)
 
 y = 2004
 slices = [slice(datetime(y,1,9,13,0), datetime(y,1,9,16,0)),
           slice(datetime(y,1,9,19,0), datetime(y,1,9,21,0)),]
-ds11 = make_xarray(xp11, slices=slices)
+ds11 = make_xarray_rhi(xp11, regime='ntta', slices=slices)
 ''' rhi sweep cutted at dropped time '''
 ds11 = ds11.drop(datetime(2004,1,9,19,13), dim='time')
 
@@ -65,7 +65,7 @@ y = 2004
 slices = [slice(datetime(y,2,2,2,0), datetime(y,2,2,5,0)),
           slice(datetime(y,2,2,6,0), datetime(y,2,2,8,0)),
           slice(datetime(y,2,2,12,0), datetime(y,2,2,15,0))]
-ds12 = make_xarray(xp12, slices=slices)
+ds12 = make_xarray_rhi(xp12, regime='ntta', slices=slices)
 
 y = 2004
 slices = [slice(datetime(y,2,16,18,0), datetime(y,2,16,21,0)),
@@ -78,10 +78,10 @@ slices = [slice(datetime(y,2,16,18,0), datetime(y,2,16,21,0)),
           slice(datetime(y,2,17,19,0),datetime(y,2,18,0,0)),
           slice(datetime(y,2,18,2,0),datetime(y,2,18,3,0)),
           slice(datetime(y,2,18,5,0),datetime(y,2,18,6,0))]
-ds13 = make_xarray(xp13, slices)
+ds13 = make_xarray_rhi(xp13, regime='ntta', slices=slices)
 
 scale = 1.6
-fig, axs = plt.subplots(5, 2, figsize=(6*scale,  5*scale),
+fig, axs = plt.subplots(5, 2, figsize=(6*scale,  5.5*scale),
                        sharex=True, sharey=True
                        )
 axs = axs.flatten()
@@ -103,12 +103,17 @@ cvalues = np.arange(20, 110, 10)
 dbz = list()
 for ds, ax in zip(ds_group, axs[1::2]):
 
-    dbz_thres = 18
-    # dbz_thres = ds['ZA'].median().values
-    ds_mask = ds['ZA'].where(ds['ZA'] >= dbz_thres)
-    ds_bool = ds_mask.notnull()
-    ds_sum = ds_bool.sum(dim='time')
-    ds_freq = (ds_sum/float(ds_bool.time.size))*100
+    # dbz_thres = 18
+    dbz_thres = ds['ZA'].median().values
+    # ds_mask = ds['ZA'].where(ds['ZA'] >= dbz_thres)
+    # ds_bool = ds_mask.notnull()
+    # ds_sum = ds_bool.sum(dim='time')
+    # ds_freq = (ds_sum/float(ds_bool.time.size))*100
+
+    enh = ds['ZA'].where(ds['ZA'] >= dbz_thres).count(
+                dim='time').astype(float)
+    all = ds['ZA'].count(dim='time').astype(float)
+    ds_freq = (enh/enh.max())*100
 
     X, Z = np.meshgrid(ds.x.values, ds.z.values)
     cf_za = ax.contourf(X, Z, ds_freq, cvalues,
@@ -182,13 +187,13 @@ for ax, dt, fn, cnt, z in zip(axs, dts, fignames, counts, dbz):
         ax.set_xlabel('Distance from radar [km]', fontsize=12)
 
     if fn == '(i)':
-        cbax = AA.Axes(fig, [0.125, 0.1, 0.37, 0.75])
+        cbax = AA.Axes(fig, [0.125, 0.05, 0.37, 0.75])
         cb = add_colorbar(cbax, cf_vr, label='[m/s]', labelpad=20,
                             loc='bottom')
 
 
     if fn == '(j)':
-        cbax = AA.Axes(fig, [0.52, 0.1, 0.37, 0.75])
+        cbax = AA.Axes(fig, [0.52, 0.05, 0.37, 0.75])
         cb = add_colorbar(cbax, cf_za, label='[%]', labelpad=20,
                             loc='bottom')
 
@@ -199,4 +204,5 @@ for ax, dt, fn, cnt, z in zip(axs, dts, fignames, counts, dbz):
     ax.yaxis.set_ticks_position('both')
     ax.xaxis.set_ticks_position('both')
 
-plt.subplots_adjust(top=0.95, bottom=0.2, hspace=0, wspace=0.05)
+plt.subplots_adjust(top=0.95, bottom=0.15,
+                    hspace=0, wspace=0.05)

@@ -44,7 +44,7 @@ fig = plt.figure(figsize=(7.5*scale, 11*scale))
 gs0 = gridspec.GridSpec(1, 2,
                         wspace=0.01)
 
-height_ratios = [2.5,1,2.5,1]
+height_ratios = [2.5, 1, 2.5, 1]
 
 gs00 = gssp(4, 1,
             subplot_spec=gs0[0],
