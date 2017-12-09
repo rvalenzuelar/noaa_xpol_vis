@@ -427,7 +427,7 @@ def rnd_rhi(reps=None, regime=None):
         m.colorbar.set_label('VR')
         f.colorbar.set_label('FREQ[%]')
 
-        return frac_qc
+        return mean_qc, frac_qc
 
 
 def rnd_ppi(reps=None, regime=None):
@@ -556,6 +556,7 @@ def rnd_ppi(reps=None, regime=None):
         plt.tight_layout()
         plt.subplots_adjust(top=0.95)
 
+        return mean_qc, frac_qc
 
 if __name__ == '__main__':
 
@@ -598,14 +599,14 @@ if __name__ == '__main__':
     # rnd_rhi(regime='tta')
     # rnd_ppi(regime='ntta')
 
-    # rnd_rhi(reps=100, regime='tta')
+    mean1, frac1 = rnd_rhi(reps=100, regime='tta')
     # plt.savefig('/Users/raulvalenzuela/random_rhi_tta.png')
-    # rnd_rhi(reps=10, regime='ntta')
+    mean2, frac2 = rnd_rhi(reps=100, regime='ntta')
     # plt.savefig('/Users/raulvalenzuela/random_rhi_ntta.png')
 
-    rnd_ppi(reps=10,regime='tta')
+    mean3, frac3 = rnd_ppi(reps=100,regime='tta')
     # plt.savefig('/Users/raulvalenzuela/random_ppi_tta.png')
-    # rnd_ppi(reps=100,regime='ntta')
+    mean4, frac4 = rnd_ppi(reps=100,regime='ntta')
     # plt.savefig('/Users/raulvalenzuela/random_ppi_ntta.png')
 
     # composite_rhi(regime='tta')
