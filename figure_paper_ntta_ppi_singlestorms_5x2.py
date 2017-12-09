@@ -55,10 +55,11 @@ except NameError:
 
 def main():
 
-    fig = plt.figure(figsize=(8.5, 14.5))
+    scale = 1.
+    fig = plt.figure(figsize=(8.5*scale, 14.5*scale))
     
     gs0 = gridspec.GridSpec(1, 2,
-                            top=0.99, bottom=0.01,
+                            top=0.98, bottom=0.04,
                             left=0.15, right=0.85,
                             wspace=0.05)
     gs00 = gssp(5, 1,
@@ -197,27 +198,27 @@ def main():
              'arrow3':{'c0':(28,128),'az':7},
               }
 
-    scale = 2.5  # use for output figure
-    length = 30
-    arrows=(arrows1, arrows2, arrows3, arrows4, arrows5)
-    axes = (axes[0],axes[2],axes[4],axes[6],axes[8])
-    for ax,arrow in zip(axes,arrows):
-        for _,arr in arrow.iteritems():
-            c0 = tuple(v*scale for v in arr['c0'])
-            az = arr['az']
-            ax.annotate("",
-                        xy=arrow_end(c0,length*scale,az),
-                        xytext=c0,
-                        xycoords='axes pixels',
-                        textcoords='axes pixels',
-                        arrowprops=dict(
-                                          shrinkA=7,
-                                          shrinkB=7,
-                                          fc='w',
-                                          ec='k',
-                                          lw=1),
-                        zorder=1,
-                        )
+    # scale = 1.0  # use for output figure
+    # length = 30
+    # arrows=(arrows1, arrows2, arrows3, arrows4, arrows5)
+    # axes = (axes[0],axes[2],axes[4],axes[6],axes[8])
+    # for ax,arrow in zip(axes,arrows):
+    #     for _,arr in arrow.iteritems():
+    #         c0 = tuple(v*scale for v in arr['c0'])
+    #         az = arr['az']
+    #         ax.annotate("",
+    #                     xy=arrow_end(c0,length*scale,az),
+    #                     xytext=c0,
+    #                     xycoords='axes pixels',
+    #                     textcoords='axes pixels',
+    #                     arrowprops=dict(
+    #                                       shrinkA=7,
+    #                                       shrinkB=7,
+    #                                       fc='w',
+    #                                       ec='k',
+    #                                       lw=1),
+    #                     zorder=1,
+    #                     )
 
 main()
 
