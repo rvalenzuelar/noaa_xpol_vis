@@ -400,11 +400,14 @@ def rnd_rhi(reps=None, regime=None):
         ''' radial distance for masking '''
         rho = np.sqrt(frac.x ** 2 + frac.z ** 2)  # [km]
         theta = np.rad2deg(np.arctan(ds08.x / ds08.z))
-        max_range = rho<28
-        min_frac = frac>20
-        max_theta = theta<73
-        mean_qc = mean.where(max_range&max_theta)
-        frac_qc = frac.where(max_range & min_frac&max_theta)
+        max_range = rho < 28
+        min_frac = frac > 20
+        max_theta = theta < 73
+        # max_theta = theta < 90
+        mean_qc = mean.where(max_range & max_theta)
+        frac_qc = frac.where(max_range & min_frac & max_theta)
+        # mean_qc = mean.where(max_range)
+        # frac_qc = frac.where(max_range & min_frac)
 
         m = mean_qc.plot.contourf(ax=ax[0],
                                 levels=16, vmin=0, vmax=30,
@@ -415,6 +418,13 @@ def rnd_rhi(reps=None, regime=None):
                                 cmap='inferno',
                                 levels=9,
                                 vmin=20, vmax=100)
+
+        ''' add terrain '''
+        prof = np.load('prof2.npy')
+        x = np.arange(0.5, 60.5, 0.5)
+        y = prof / 1000.
+        ax[1].fill_between(x, 0, y, facecolor='gray',
+                        edgecolor='k')
 
         ax[0].text(-40, 5.3, 'repetitions: {}'.format(nreps),
                    ha='left')
@@ -626,13 +636,15 @@ if __name__ == '__main__':
 
     # rnd_rhi(reps=100, regime='tta')
     # plt.savefig('/Users/raulvalenzuela/random_rhi_tta.png')
+
     # rnd_rhi(reps=100, regime='ntta')
     # plt.savefig('/Users/raulvalenzuela/random_rhi_ntta.png')
 
-    rnd_ppi(reps=100,regime='tta')
-    plt.savefig('/Users/raulvalenzuela/random_ppi_tta.png')
-    rnd_ppi(reps=100,regime='ntta')
-    plt.savefig('/Users/raulvalenzuela/random_ppi_ntta.png')
+    fraq1 = rnd_ppi(reps=100,regime='tta')
+    # plt.savefig('/Users/raulvalenzuela/random_ppi_tta.png')
+
+    fraq2 = rnd_ppi(reps=100,regime='ntta')
+    # plt.savefig('/Users/raulvalenzuela/random_ppi_ntta.png')
 
     # composite_rhi(regime='tta')
     # plt.savefig('/Users/raulvalenzuela/composite_rhi_tta.png')
