@@ -60,27 +60,27 @@ class process:
         ''' 
         If process all the cases then remove case 12 
         (02Feb04) from RHIs. This is done to remove 
-        discontiuity in 7-storm composite RHI
+        discontinuity in 7-storm composite RHI
         '''
-        if (12 in case) and (len(case)==7):
+        if (12 in case) and (len(case) == 7):
             case.remove(12) 
-            rhi_df = make_dataframe(mode='rhi',case=case)
+            rhi_df = make_dataframe(mode='rhi', case=case)
             ''' insert again to process PPIs'''
             case.insert(4,12)
         else:
-            rhi_df = make_dataframe(mode='rhi',case=case)
+            rhi_df = make_dataframe(mode='rhi', case=case)
         
-        ppi_df = make_dataframe(mode='ppi',case=case)
+        ppi_df = make_dataframe(mode='ppi', case=case)
 
         self.rhi_dates = rhi_df.index
         self.ppi_dates = ppi_df.index
 
         years = []
         for c in case:
-            if c in [8,9,10] and 2003 not in years:
+            if c in [8, 9, 10] and 2003 not in years:
                 years.append(2003)
                 
-            if c in [11,12,13,14] and 2004 not in years:
+            if c in [11, 12, 13, 14] and 2004 not in years:
                 years.append(2004)               
               
         tta_dates = get_tta_dates(years, params)

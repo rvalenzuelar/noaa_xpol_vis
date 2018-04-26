@@ -18,7 +18,7 @@ import xpol_tta_analysis as xta
 import mpl_toolkits.axisartist as AA
 import matplotlib as mpl
 from matplotlib.gridspec import GridSpecFromSubplotSpec as gssp
-from rv_utilities import add_colorbar
+from rvtools import add_colorbar
 mpl.rcParams['font.size']=15
 
 ''' 

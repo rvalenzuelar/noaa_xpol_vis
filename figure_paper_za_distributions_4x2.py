@@ -6,8 +6,8 @@ Created on Fri Aug 12 11:19:34 2016
 """
 import matplotlib.pyplot as plt
 import xpol_tta_analysis as xta
-from rv_utilities import discrete_cmap
-
+from rvtools import discrete_cmap
+import numpy as np
 from matplotlib import rcParams
 rcParams['xtick.labelsize'] = 15
 rcParams['ytick.labelsize'] = 15
@@ -65,28 +65,29 @@ except NameError:
     xall=xta.process(case=[8, 9, 10, 11, 12, 13, 14],
                      params=params)
     
-cmap = discrete_cmap(7, base_cmap='Set1')
+# cmap = discrete_cmap(7, base_cmap='Set1')
+cmap = plt.cm.get_cmap('Set1', 7)
 
 datelabs = (
             '(a) All',
             '(b) 12-14Jan03',
             '(c) 21-23Jan03',
             '(d) 15-16Feb03',
-            '(e) 09Jan03',
+            '(e) 09Jan04',
             '(f) 02Feb04',
             '(g) 16-18Feb04',
             '(h) 25Feb04',
             )
 
-cases = (xall,x08,x09,x10,x11,x12,x13,x14)
-modes = ('ppi','rhi')
+cases = (xall, x08, x09, x10, x11, x12, x13, x14)
+modes = ('ppi', 'rhi')
 
     
 for mode in modes:
     fig,ax = plt.subplots(4,2,figsize=(8,11.5),
                           sharey=True,sharex=True)
     ax = ax.flatten()
-    for case,n,lab in zip(cases,range(8),datelabs):
+    for case, n, lab in zip(cases,range(8),datelabs):
         if mode == 'ppi':
             try:
                 size_tta = case.ppi_tta.index.size
@@ -114,13 +115,23 @@ for mode in modes:
                     fontsize=12)        
         ax[n].text(-12,0.62,'NO-TTA (n={})'.format(size_ntta),
                     fontsize=12)        
-        
-    ax[0].text(49,1.1,mode.upper(),weight='bold',fontsize=15)
-    ax[4].text(-35,1.5,'Cumulative frequency',fontsize=15,
+        ax[n].set_yticks(np.arange(0, 1.2, 0.2))
+        ax[n].set_yticklabels(['','0.2','0.4','0.6','0.8',''])
+
+        ax[n].set_xticks(range(-20, 60, 10))
+        # labels = ax[n].get_yticklabels()
+        # labels[0].set_text('')
+        # labels[-1].set_text('')
+        # labels[0] = labels[-1] = ""
+        # ax[n].set_yticklabels(labels)
+
+    ax[0].text(49, 1.1, mode.upper(), weight='bold',
+               fontsize=15)
+    ax[4].text(-40, 1.5,'Cumulative frequency',fontsize=15,
                 rotation=90)
-    ax[6].text(35,-0.3,'Reflectivity [dBZ]',fontsize=15)
+    ax[6].text(35, -0.3,'Reflectivity [dBZ]',fontsize=15)
     
-    legend_loc=[-0.05,0.1,0.2,0.8]
+    legend_loc = [-0.05, 0.1, 0.2, 0.8]
     ax[0].legend([h1,h2],
                  ['',''],
                  prop={'size': 12},
@@ -129,7 +140,7 @@ for mode in modes:
                  framealpha=0,
                  handlelength=1,
                  bbox_to_anchor=legend_loc)
-    
+
     plt.subplots_adjust(wspace=0.1,hspace=0.15)
     
     
